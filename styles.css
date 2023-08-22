@@ -6,3 +6,14 @@ body {
     background-color: white;
 }
 
+html, body {
+    margin: 0px;
+    padding: 0px;
+ }
+
+
+.center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
