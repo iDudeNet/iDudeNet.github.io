@@ -12,8 +12,18 @@ html, body {
  }
 
 
+h2 {
+    font-size: clamp(1rem, 2.5vw, 1.5rem);
+}    
+
 .center {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+#logo {
+    display: flex; 
+    width: clamp(240px, 50%, 800px);
+    margin-bottom: -50px;
 }
