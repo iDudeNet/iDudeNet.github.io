@@ -25,5 +25,19 @@ h2 {
 #logo {
     display: flex; 
     width: clamp(240px, 50%, 800px);
-    margin-bottom: -50px;
 }
+
+iframe {
+    max-width: 800px;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16/9;
+    margin-left:20px;
+    margin-right:20px;
+    border-radius: 30px;
+    -webkit-border-radius: 30px;
+    -moz-border-radius: 30px;
+    -ms-border-radius: 30px;
+    -o-border-radius: 30px;
+}
+
