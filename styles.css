@@ -4,6 +4,11 @@
 
 body {
     background-color: #f5f5f7;
+    background-image: url(./images/art/testbitmap.svg);
+    background-repeat: no-repeat;
+    background-size: 200%;
+    background-position: center;
+    background-attachment: fixed;
 }
 
 html, body {
@@ -58,3 +63,4 @@ h2 {
     -o-border-radius: 20px;
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
+
