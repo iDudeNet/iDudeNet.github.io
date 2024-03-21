@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keyboard Arrow Navigation</title>
+</head>
+<body>
+  <button>Button 1</button>
+  <input type="text" value="Input 1">
+  <a href="#">Link 1</a>
+  <button>Button 2</button>
+  <input type="text" value="Input 2">
+  <a href="#">Link 2</a>
+
+<script>
+document.addEventListener('keydown', function(event) {
+  if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+    event.preventDefault(); // Prevent default behavior of arrow keys
+    
+    const focusableElements = document.querySelectorAll('button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])');
+    const focusedIndex = Array.from(focusableElements).findIndex(element => element === document.activeElement);
+    
+    let nextIndex;
+    if (event.key === "ArrowUp") {
+      nextIndex = focusedIndex === -1 ? focusableElements.length - 1 : focusedIndex - 1;
+    } else { // ArrowDown
+      nextIndex = focusedIndex === -1 ? 0 : (focusedIndex + 1) % focusableElements.length;
+    }
+    
+    focusableElements[nextIndex].focus();
+  }
+});
+</script>
+</body>
+</html>
