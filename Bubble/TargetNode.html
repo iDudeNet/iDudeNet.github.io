@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DOM Element Change Detector</title>
+</head>
+<body>
+
+<div id="load_spatialNav">
+    <!-- Elements will be added here dynamically -->
+</div>
+
+<script>
+let isMyFunctionExecuting = false;
+const functionQueue = [];
+
+// Function to be executed when target element changes
+function onChangeCallback(mutationsList, observer) {
+    mutationsList.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
+            if (node.nodeType === 1 && node.classList.contains('focusable')) {
+                functionQueue.push(myFunction);
+                executeFunctionQueue();
+            }
+        });
+    });
+}
+
+// Function to execute the queued functions
+function executeFunctionQueue() {
+    if (!isMyFunctionExecuting && functionQueue.length > 0) {
+        const fn = functionQueue.shift();
+        isMyFunctionExecuting = true;
+        fn(() => {
+            isMyFunctionExecuting = false;
+            executeFunctionQueue();
+        });
+    }
+}
+
+// Function to be executed when target element changes
+function myFunction(callback) {
+    console.log('Function called element with class "focusable" added!!!');
+    // Simulate Processing function through Hydration Bubble.io Lag fest..
+    setTimeout(() => {
+        console.log('Function execution complete.');
+        callback();
+    }, 2000); // Simulate Lag Hell using 2 seconds...
+}
+
+// Function to periodically check for the presence of the target node (hydration check)!
+function waitForTargetNode() {
+    const targetNode = document.getElementById('load_spatialNav');
+    if (targetNode) {
+        // If the target node is available...initialize the observer!
+        initializeObserver(targetNode);
+    } else {
+        // If the target node is not yet available, wait...try again
+        setTimeout(waitForTargetNode, 100);
+    }
+}
+
+// Initialize the observer
+function initializeObserver(targetNode) {
+    // Options for the observer (which mutations to observe from Bubble.io India Lag fest) 
+    const config = { childList: true, subtree: true };
+
+    // Create an observer instance linked callback function
+    const observer = new MutationObserver(onChangeCallback);
+
+    // Start observing the target node for configured mutations
+    observer.observe(targetNode, config);
+
+    // TEST CODE: Adds element with the class "focusable" after 3 seconds blah blah blah
+    setTimeout(() => {
+        const newElement = document.createElement('div');
+        newElement.classList.add('focusable');
+        newElement.textContent = 'New Focusable Element';
+        targetNode.appendChild(newElement);
+    }, 3000);
+}
+
+// Start waiting for the target node
+waitForTargetNode();
+
+</script>
+
+</body>
+</html>

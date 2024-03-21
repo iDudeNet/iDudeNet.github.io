@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Styled Input</title>
+<style>
+/* CSS code to style the container */
+.input-container {
+    border: 2px solid #ccc; /* border with 2px width and solid style */
+    display: inline-block; /* display as inline-block to fit content width */
+    padding: 2px; /* optional: add padding if needed */
+}
+
+/* Apply styles when the container or its descendants are focused */
+.input-container:focus-within {
+    border-color: #555; /* change border color when focused within */
+}
+
+/* CSS code to style the input element */
+.input-container input {
+    border: none; /* remove default input border */
+    width: 100%; /* ensure input fills its container */
+    padding: 8px 12px; /* optional: add padding to input */
+    outline: none; /* remove default outline */
+    box-sizing: border-box; /* include padding and border in element's total width */
+}
+</style>
+</head>
+<body>
+
+<!-- Container element for the input -->
+<div class="input-container">
+    <!-- HTML input element -->
+    <input type="text" placeholder="Enter text here">
+</div>
+
+</body>
+</html>

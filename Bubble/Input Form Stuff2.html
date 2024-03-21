@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Styled Inputs</title>
+<style>
+/* CSS code to style the container */
+.input-container {
+    border: 2px solid #ccc; /* border with 2px width and solid style */
+    display: inline-block; /* display as inline-block to fit content width */
+    padding: 2px; /* optional: add padding if needed */
+}
+
+/* Optional: Hover and focus styles */
+.input-container:hover,
+.input-container:focus-within {
+    border-color: #555; /* change border color on hover and focus */
+}
+
+/* CSS code to style the input and select elements */
+.input-container input, .input-container select {
+    border: none; /* remove default border */
+    width: 100%; /* ensure input/select fills its container */
+    padding: 8px 12px; /* optional: add padding to input/select */
+    outline: none; /* remove default outline */
+    box-sizing: border-box; /* include padding and border in element's total width */
+}
+</style>
+</head>
+<body>
+
+<!-- HTML input and select elements -->
+<input type="text" placeholder="Enter text here">
+<select>
+  <option value="volvo">Volvo</option>
+  <option value="saab">Saab</option>
+  <option value="mercedes">Mercedes</option>
+  <option value="audi">Audi</option>
+</select>
+
+<script>
+// Function to wrap input and select elements with a <div> container and add 'focusable' class
+function wrapInputAndSelectElements(element) {
+    var divWrapper = document.createElement('div'); // Create a new <div> element
+    divWrapper.classList.add('input-container', 'focusable'); // Add classes 'input-container' and 'focusable' to the div
+    element.parentNode.insertBefore(divWrapper, element); // Insert the new div before the input/select element
+    divWrapper.appendChild(element); // Move the input/select element inside the new div
+    // Event listener for the div wrapper
+    divWrapper.addEventListener('click', function(event) {
+        var inputElement = divWrapper.querySelector('input, select');
+        if (inputElement) {
+            inputElement.focus(); // Set focus to the input/select element inside the div
+        }
+    });
+    // Event listener for the input/select element
+    element.addEventListener('focus', function() {
+        divWrapper.classList.add('focused');
+    });
+}
+
+// Function to wrap existing input and select elements
+function wrapExistingInputAndSelectElements() {
+    var inputElements = document.querySelectorAll('input, select');
+    inputElements.forEach(function(element) {
+        wrapInputAndSelectElements(element);
+    });
+}
+
+// Execute the function to wrap existing input and select elements when the script initially runs
+wrapExistingInputAndSelectElements();
+
+// MutationObserver to watch for changes in the DOM and wrap newly added input/select elements
+var observer = new MutationObserver(function(mutationsList, observer) {
+    mutationsList.forEach(function(mutation) {
+        if (mutation.type === 'childList') {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1 && (node.tagName === 'INPUT' || node.tagName === 'SELECT')) {
+                    wrapInputAndSelectElements(node);
+                }
+            });
+        }
+    });
+});
+
+// Start observing mutations in the document body
+observer.observe(document.body, { childList: true, subtree: true });
+</script>
+
+</body>
+</html>

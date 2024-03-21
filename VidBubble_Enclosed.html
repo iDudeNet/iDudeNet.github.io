@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vimeo Player</title>
+    <style>
+        #vimeo-player {
+            width: 100%;
+            height: 0;
+            padding-top: 56.25%; /* 16:9 aspect ratio */
+            position: relative;
+        }
+        #vimeo-player iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="vimeo-player" tabindex="0">
+        <!-- Vimeo player will be loaded here -->
+    </div>
+
+    <!-- Load the Vimeo Player API script and initialize the player -->
+    <script src="https://player.vimeo.com/api/player.js" onload="initializeVimeoPlayer()"></script>
+    <script>
+
+        var player;
+
+        // Function to initialize the Vimeo player
+        function initializeVimeoPlayer() {
+            var userAgent = navigator.userAgent;
+            var WebOS = userAgent.includes("(Web0S; Linux/SmartTV)");
+
+            if (WebOS) {
+                console.log("This is a WebOS Smart TV");
+            } else {
+                console.log("This is not a WebOS Smart TV");
+            }
+
+            const vimeoUrl = 'https://vimeo.com/914872380';
+
+            // Split the URL by '/'
+            var parts = vimeoUrl.split('/');
+
+            // The last part of the URL will be the video ID
+            var videoId = parts[parts.length - 1];
+
+            // The domain name will be 'vimeo.com'
+            var domain = parts[2];
+
+            // Replace with your Vimeo video ID
+            const errorVideoId = '920877432';
+
+            var keydown_ToggleLock = false; // Add this variable
+
+            function createVimeoPlayer(videoId, loop) {
+                return new Vimeo.Player(document.getElementById('vimeo-player'), {
+                    url: 'https://vimeo.com/' + videoId,
+                    autoplay: true,
+                    autopause: false,
+                    badge: false,
+                    keyboard: true,
+                    controls: true,
+                    pip: false,
+                    loop: loop
+                });
+            }
+
+            // Custom Control States for Player
+            var isPlaying = false;
+
+            function initializePlayer() {
+                player = createVimeoPlayer(videoId, false);
+                player.on('loaded', function() {
+                    console.log('Video loaded successfully');
+                    // Play the video when the player is ready
+                    player.ready().then(function() {
+                        player.play().then(function() {
+                            console.log('Video started playing');
+                        }).catch(function(error) {
+                            console.log('Error playing the video:', error);
+                        });
+                        // Set focus to the player element
+                        const playerElement = document.getElementById('vimeo-player');
+                        playerElement.focus(); 
+                    });
+                });
+
+                // Update isPlaying based on video state changes
+                player.on('play', function() {
+                    isPlaying = true;
+                });
+
+                player.on('pause', function() {
+                    isPlaying = false;
+                });
+            }
+
+            // Event listeners for key presses
+            // Add event listener for key presses
+            document.addEventListener('keydown', function(event) {
+
+                    // Keycodes for LGTV 
+                    if (event.keyCode === 13) { // Enter OK key on RC
+                        if (!keydown_ToggleLock) {
+                            togglePlayback();
+                            keydown_ToggleLock = true;
+                        }
+                    }
+                    if (event.keyCode === 415) { // Play key on RC
+                        playPlayer();
+                    }
+                    if (event.keyCode === 19) { // Pause key on RC
+                        pausePlayer();
+                    }
+                    if (event.keyCode === 413) { // stop key on RC
+                        pausePlayer();
+                    }
+                    if (event.keyCode === 39) { // right arrow key 
+                        scrubForward();
+                    }
+                    if (event.keyCode === 417) { // forward double arrow key 
+                        scrubForward();
+                    }
+                    if (event.keyCode === 37) { // left arrow key 
+                        scrubBackward();
+                    }
+                    if (event.keyCode === 412) { // backward double arrow key 
+                        scrubBackward();
+                    }
+
+            });
+
+            document.addEventListener('keyup', function(event) {
+                if (event.keyCode === 13) { // Enter OK key on RC
+                    keydown_ToggleLock = false;
+                }    
+            });
+
+            // Function to toggle playback state
+            function togglePlayback() {
+                if (isPlaying) {
+                    pausePlayer();
+                } else {
+                    playPlayer();
+                }
+            }
+
+            // Function to handle pause operation
+            function pausePlayer() {
+                player.pause()
+                    .then(function() {
+                        console.log('Video paused');
+                        isPlaying = false;
+                    })
+                    .catch(function(error) {
+                        console.error('Error pausing video:', error);
+                    });
+            }
+
+            // Function to handle play operation
+            function playPlayer() {
+                player.play()
+                    .then(function() {
+                        console.log('Video playing');
+                        isPlaying = true;
+                    })
+                    .catch(function(error) {
+                        console.error('Error playing video:', error);
+                    });
+            }
+
+            // Function to scrub video forward by 5 seconds
+            function scrubForward() {
+                player.getCurrentTime().then(function(seconds) {
+                    player.setCurrentTime(seconds + 5).catch(function(error) {
+                        console.error('Error scrubbing forward:', error);
+                    });
+                }).catch(function(error) {
+                    console.error('Error getting current time:', error);
+                });
+            }
+
+            // Function to scrub video backward by 5 seconds
+            function scrubBackward() {
+                player.getCurrentTime().then(function(seconds) {
+                    var newTime = seconds - 5;
+                    if (newTime < 0) {
+                        newTime = 0;
+                    }
+                    player.setCurrentTime(newTime).catch(function(error) {
+                        console.error('Error scrubbing backward:', error);
+                    });
+                }).catch(function(error) {
+                    console.error('Error getting current time:', error);
+                });
+            }
+
+            // LGTV WebOS 
+            if (WebOS) {
+                // Keep focus on vimeo-player id since the internal UI resets focus to the iFRAME inside it along with eventListner controls
+                setInterval(function() {
+                    var vimeoPlayer = document.getElementById('vimeo-player');
+                    
+                    if (vimeoPlayer && document.activeElement !== vimeoPlayer) {
+                        vimeoPlayer.focus();
+                    }
+                }, 1000); // 1000 milliseconds = 1 second
+            }
+
+            initializePlayer(); // Initialize the player once everything is set up
+        }
+    </script>
+</body>
+</html>

@@ -27,44 +27,95 @@
 
     <script src="https://player.vimeo.com/api/player.js"></script>
     <script>
+        // Get the user agent string
+        var userAgent = navigator.userAgent;
 
-        // Create a URLSearchParams object with the current URL
-        var urlParams = new URLSearchParams(window.location.search);
+        // Check if the user agent string contains "(Web0S; Linux/SmartTV)"
+        if (userAgent.includes("(Web0S; Linux/SmartTV)")) {
+            var WebOS = true;
+            console.log("This is a WebOS Smart TV");
+        } else {
+            console.log("This is not a WebOS Smart TV");
+            var WebOS = false;            
+        }
 
-        // Get the value of the 'VideoID' parameter from the query string
-        const videoId = urlParams.get('id');
+                // Create a URLSearchParams object with the current URL
+                var urlParams = new URLSearchParams(window.location.search);
+
+                // Get the value of the 'VideoID' parameter from the query string
+                const videoId = urlParams.get('id');
 
         // Replace with your Vimeo video ID
-        //const videoId = '912109690';  // 
+        const errorVideoId = '920877432';
 
-        // Create a new Vimeo Player object
-        const player = new Vimeo.Player(document.getElementById('vimeo-player'), {
-            url: 'https://vimeo.com/' + videoId,
-            autoplay: true,
-            autopause: false,
-            badge: false,
-            keyboard: true,
-            controls: true,
-            pip: false,
-            loop: false
+        // Make a request to the Vimeo API to retrieve information about the video
+        fetch('https://api.vimeo.com/videos/' + videoId, {
+            method: 'GET',
+            headers: {
+                'Authorization': 'Bearer 89495414d0a7fafe44835e282754e974' // Replace with your Vimeo API access token
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                console.log('Video exists');
+
+                    // Create a new Vimeo Player object
+                    const player = new Vimeo.Player(document.getElementById('vimeo-player'), {
+                        url: 'https://vimeo.com/' + videoId,
+                        autoplay: true,
+                        autopause: false,
+                        badge: false,
+                        keyboard: true,
+                        controls: true,
+                        pip: false,
+                        loop: false
+                    });
+
+            } else {
+                console.log('Video does not exist');
+
+                    // Create a new Vimeo Player object
+                    const player = new Vimeo.Player(document.getElementById('vimeo-player'), {
+                        url: 'https://vimeo.com/' + errorVideoId,
+                        autoplay: true,
+                        autopause: false,
+                        badge: false,
+                        keyboard: true,
+                        controls: true,
+                        pip: false,
+                        loop: true
+                    });
+
+            }
+
+        })
+        .catch(error => {
+            console.error('Error checking video existence:', error);
         });
 
-      var isPlaying = false;
-      var keydown_ToggleLock = false;
+    // Custom Control States for Player
+    var isPlaying = false;
+    var keydown_ToggleLock = false;
 
-      // Play the video when the player is ready
-      player.ready().then(function() {
-            player.play().then(function() {
-                console.log('Video started playing');
-            }).catch(function(error) {
-                console.log('Error playing the video:', error);
+    player.on('loaded', function() {
+        console.log('Video loaded successfully');
+
+        // Play the video when the player is ready
+        player.ready().then(function() {
+                player.play().then(function() {
+                    console.log('Video started playing');
+                }).catch(function(error) {
+                    console.log('Error playing the video:', error);
+                });
+
+                // Set focus to the player element
+                const playerElement = document.getElementById('vimeo-player');
+                playerElement.focus(); 
+
             });
 
-            // Set focus to the player element
-            const playerElement = document.getElementById('vimeo-player');
-            playerElement.focus(); 
+    });
 
-        });
 
         // Function to toggle playback state
         function togglePlayback() {
@@ -178,6 +229,7 @@
             }    
         });
 
+        /*
         setInterval(function() {
             var activeElement = document.activeElement;
             var focusElement = document.hasFocus() ? document.activeElement : "None";
@@ -185,15 +237,19 @@
             console.log("Current active element: ", activeElement);
             console.log("Element with focus: ", focusElement);
         }, 2000); // 10000 milliseconds = 10 seconds
+        */
 
-
-        setInterval(function() {
-            var vimeoPlayer = document.getElementById('vimeo-player');
-            
-            if (vimeoPlayer && document.activeElement !== vimeoPlayer) {
-                vimeoPlayer.focus();
-            }
-        }, 1000); // 1000 milliseconds = 1 second
+        // LGTV WebOS 
+        if (WebOS) {
+            // Keep focus on vimeo-player id since the internal UI resets focus to the iFRAME inside it along with eventListner controls
+            setInterval(function() {
+                var vimeoPlayer = document.getElementById('vimeo-player');
+                
+                if (vimeoPlayer && document.activeElement !== vimeoPlayer) {
+                    vimeoPlayer.focus();
+                }
+            }, 1000); // 1000 milliseconds = 1 second
+        }        
 
     </script>
 </body>

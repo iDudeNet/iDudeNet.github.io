@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IFrame Example</title>
+    <style>
+        #myIframe {
+            width: 100%;
+            height: 400px; /* Or set any fixed height */
+            border: 1px solid #ccc;
+            overflow: auto; /* Enforce scrolling if content exceeds iframe dimensions */
+        }
+    </style>
+</head>
+<body>
+    <div id="myIframe" class="focusable" tabindex="0">
+        <iframe tabindex="-1">
+            <html>
+                <body>
+                    <h1>Hello World</h1>
+                    <p>Duo Reges: constructio interrete. Sed quid sentiat, non videtis. Nobis aliter videtur, recte secusne, postea; Qualem igitur hominem natura inchoavit? Quantum Aristoxeni ingenium consumptum videmus in musicis? Quodcumque in mentem incideret, et quodcumque tamquam occurreret. Numquam facies. </p>
+                </body>
+            </html>
+        </iframe>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var div = document.getElementById('myIframe');
+            var iframe = div.querySelector('iframe');
+
+            var iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+            iframeDocument.addEventListener('keydown', function (event) {
+                if (event.keyCode === 13) { // Check for Enter key
+                    div.focus();
+                }
+            });
+
+            div.addEventListener('keydown', function (event) {
+                if (event.keyCode === 13) { // Check for Enter key
+                    iframe.focus();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
