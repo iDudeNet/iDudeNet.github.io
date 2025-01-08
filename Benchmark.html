@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Browser Benchmark</title>
+</head>
+<body>
+    <h1>Custom Browser Benchmark</h1>
+    <button id="run-tests">Run Tests</button>
+    <pre id="output"></pre>
+
+    <script>
+        async function runTests() {
+            const output = document.getElementById("output");
+            const append = msg => (output.textContent += msg + "\n");
+
+            // CPU Cores
+            append(`Logical CPU Cores: ${navigator.hardwareConcurrency}`);
+
+            // RAM
+            append(`Approximate RAM: ${navigator.deviceMemory} GB`);
+
+            // CPU Benchmark
+            const cpuStart = performance.now();
+            let total = 0;
+            for (let i = 0; i < 1e7; i++) {
+                total += Math.sqrt(i);
+            }
+            const cpuDuration = performance.now() - cpuStart;
+            append(`CPU Benchmark: ${cpuDuration.toFixed(2)} ms`);
+
+            // Thread Test
+            const threadTest = async () => {
+                const workerScript = `
+                    self.onmessage = () => {
+                        const start = performance.now();
+                        for (let i = 0; i < 1e7; i++) {}
+                        self.postMessage(performance.now() - start);
+                    };
+                `;
+                const blob = new Blob([workerScript], { type: "application/javascript" });
+                const workerURL = URL.createObjectURL(blob);
+
+                const workers = [];
+                const results = [];
+
+                for (let i = 0; i < navigator.hardwareConcurrency; i++) {
+                    const worker = new Worker(workerURL);
+                    workers.push(worker);
+                    results.push(
+                        new Promise(resolve => {
+                            worker.onmessage = e => {
+                                resolve(e.data);
+                                worker.terminate();
+                            };
+                            worker.postMessage(null);
+                        })
+                    );
+                }
+
+                const timings = await Promise.all(results);
+                append(`Thread Timings: ${timings.join(", ")} ms`);
+            };
+            await threadTest();
+
+            // Memory Test
+            let size = 1;
+            try {
+                while (true) {
+                    const allocation = new ArrayBuffer(size * 1024 * 1024);
+                    size++;
+                }
+            } catch (e) {
+                append(`Max allocatable heap size: ${size - 1} MB`);
+            }
+        }
+
+        document.getElementById("run-tests").addEventListener("click", runTests);
+    </script>
+</body>
+</html>

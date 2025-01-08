@@ -24,7 +24,9 @@ document.addEventListener('keydown', function(event) {
     let nextIndex;
     if (event.key === "ArrowUp") {
       nextIndex = focusedIndex === -1 ? focusableElements.length - 1 : focusedIndex - 1;
-    } else { // ArrowDown
+    } 
+    
+    if (event.key === "ArrowDown"){ // ArrowDown
       nextIndex = focusedIndex === -1 ? 0 : (focusedIndex + 1) % focusableElements.length;
     }
     
