@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tizen Audio Test</title>
+</head>
+<body>
+    <h1>Tizen Audio Test</h1>
+    <p>Press any key to play audio. It will play multiple times.</p>
+
+    <script>
+        // Create an audio object with the provided URL
+        var sound = new Howl({
+            src: ['https://webtv.roybiverse.com/sfxD05.mp3'],
+            html5: true,  // Forces use of <audio> instead of Web Audio API
+            onplay: function() {
+                console.log('Playing audio');
+            },
+            onend: function() {
+                console.log('Audio finished');
+            },
+            onstop: function() {
+                console.log('Audio stopped');
+            },
+            onpause: function() {
+                console.log('Audio paused');
+            },
+            onloaderror: function(id, error) {
+                console.error('Load error', error);
+            },
+            onplayerror: function(id, error) {
+                console.error('Play error', error);
+            }
+        });
+
+        // Keydown event listener to trigger the sound
+        document.addEventListener('keydown', function() {
+            sound.play();
+        });  // Removed { once: true }, so it plays every time a key is pressed
+
+    </script>
+
+    <!-- Include Howler.js -->
+    <script src="https://cdn.jsdelivr.net/npm/howler@2.2.1/dist/howler.min.js"></script>
+</body>
+</html>
