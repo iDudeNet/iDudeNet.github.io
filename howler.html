@@ -1,48 +1,1388 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tizen Audio Test</title>
-</head>
-<body>
-    <h1>Tizen Audio Test</h1>
-    <p>Press any key to play audio. It will play multiple times.</p>
+    <meta http-equiv="Content-Security-Policy" content="
+default-src * data: blob: 'unsafe-inline' 'unsafe-eval'; 
+script-src * 'unsafe-inline' 'unsafe-eval'; 
+style-src * 'unsafe-inline'; 
+img-src * data: blob:; 
+connect-src * wss:; 
+font-src * ;
+media-src * ;
+frame-ancestors *;
+prefetch-src *;
+child-src * ;
+frame-src * about:blank about:srcdoc about:;">
+    <meta http-equiv="Permissions-Policy" content="interest-cohort=()">
 
     <!-- Include Howler.js -->
     <script src="https://cdn.jsdelivr.net/npm/howler@2.2.1/dist/howler.min.js"></script>
+
+
+
+
+    <script>
+        // TRASHY WAS LIVE
+        setTimeout(() => {
+            console.log("TV-like focus behavior active after 4s delay");
+
+            const TARGET_POSITION = 10; // Pixels from container's left edge
+            let isScrolling = false;
+
+            document.addEventListener("focusin", (event) => {
+                const item = event.target;
+                if (!item.classList.contains("focusable")) return;
+
+                const scrollContainer = item.closest(".video_row");
+                if (!scrollContainer) return;
+
+                // Prevent interference with ongoing scroll
+                if (isScrolling) return;
+
+                // Get positioning measurements
+                const containerRect = scrollContainer.getBoundingClientRect();
+                const itemRect = item.getBoundingClientRect();
+
+                // Calculate ideal scroll position to land item at TARGET_POSITION
+                const scrollDelta = itemRect.left - containerRect.left - TARGET_POSITION;
+                let targetScroll = scrollContainer.scrollLeft + scrollDelta;
+
+                // Contain within scrollable bounds
+                const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+                targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
+
+                // Check if scroll needed
+                if (Math.abs(scrollContainer.scrollLeft - targetScroll) < 5) {
+                    console.log("Already in target position");
+                    return;
+                }
+
+                // Start scroll process
+                isScrolling = true;
+                console.log(`Scrolling to ${targetScroll} (${scrollDelta}px adjustment)`);
+
+                // Netflix-style visual feedback
+                item.classList.add("focused-item");
+                scrollContainer.addEventListener("scrollend", () => {
+                    item.classList.remove("focused-item");
+                    isScrolling = false;
+                }, { once: true });
+
+                // Execute smooth scroll
+                scrollContainer.scrollTo({
+                    left: targetScroll,
+                    behavior: "smooth"
+                });
+            });
+        }, 4000);
+    </script>
+
+
+
+
+
+
+
+
+</head>
+
+<body>
+    <h1>Tizen Audio Test</h1>
+    <p>Press any key to play audio. It will play multiple times.</p>
 
     <script>
         // Create an audio object with the provided URL
         var sound = new Howl({
             src: ['https://webtv.roybiverse.com/sfxD05.mp3'],
             html5: true,  // Forces use of <audio> instead of Web Audio API
-            onplay: function() {
+            onplay: function () {
                 console.log('Playing audio');
             },
-            onend: function() {
+            onend: function () {
                 console.log('Audio finished');
             },
-            onstop: function() {
+            onstop: function () {
                 console.log('Audio stopped');
             },
-            onpause: function() {
+            onpause: function () {
                 console.log('Audio paused');
             },
-            onloaderror: function(id, error) {
+            onloaderror: function (id, error) {
                 console.error('Load error', error);
             },
-            onplayerror: function(id, error) {
+            onplayerror: function (id, error) {
                 console.error('Play error', error);
             }
         });
 
         // Keydown event listener to trigger the sound
-        document.addEventListener('keydown', function() {
+        document.addEventListener('keydown', function () {
             sound.play();
         });  // Removed { once: true }, so it plays every time a key is pressed
 
     </script>
 
 </body>
+
 </html>
+<script>
+    // THE BETTER CODE // Still can wonk a little
+    setTimeout(() => {
+        console.log("Focus event listener attached after 4 seconds.");
+
+        let isScrolling = false;
+
+        document.addEventListener("focusin", function (event) {
+            let item = event.target;
+            console.log("Focused element:", item);
+
+            if (item.classList.contains("focusable")) {
+                console.log("Element is focusable.");
+
+                let parentScrollable = item.closest(".video_row");
+                if (parentScrollable) {
+                    console.log("Found parent scrollable:", parentScrollable);
+
+                    let parentRect = parentScrollable.getBoundingClientRect();
+                    let itemRect = item.getBoundingClientRect();
+
+                    let scrollLeftDelta = itemRect.left - parentRect.left;
+                    let maxScrollLeft = parentScrollable.scrollWidth - parentScrollable.clientWidth;
+
+                    let newScrollPosition = parentScrollable.scrollLeft + scrollLeftDelta - 20;
+
+                    // Prevent unnecessary scrolling at edges
+                    if (newScrollPosition < 0) {
+                        console.log("Already at leftmost limit. No scrolling.");
+                        return;
+                    } else if (newScrollPosition > maxScrollLeft) {
+                        console.log("Already at rightmost limit. No scrolling.");
+                        return;
+                    }
+
+                    console.log("Scrolling to:", newScrollPosition);
+
+                    if (!isScrolling) {
+                        isScrolling = true;
+
+                        parentScrollable.scrollTo({
+                            left: newScrollPosition,
+                            behavior: "smooth"
+                        });
+
+                        setTimeout(() => {
+                            isScrolling = false; // Reset after scroll completes
+                        }, 300); // Adjust timing based on smooth scroll duration
+                    }
+                } else {
+                    console.log("No parent scrollable found.");
+                }
+            } else {
+                console.log("Element is NOT focusable.");
+            }
+        });
+    }, 4000);
+</script>
+
+
+<script>
+    setTimeout(() => {
+        console.log("Focus event listener attached after 4 seconds.");
+
+        let isScrolling = false;
+
+        document.addEventListener("focusin", function (event) {
+            const item = event.target;
+            console.log("Focused element:", item);
+
+            if (!item.classList.contains("focusable")) {
+                console.log("Element is NOT focusable.");
+                return;
+            }
+
+            console.log("Element is focusable.");
+            const parentScrollable = item.closest(".video_row");
+            if (!parentScrollable) {
+                console.log("No parent scrollable found.");
+                return;
+            }
+
+            console.log("Found parent scrollable:", parentScrollable);
+            const parentRect = parentScrollable.getBoundingClientRect();
+            const itemRect = item.getBoundingClientRect();
+
+            // Check if already fully visible
+            const isFullyVisible = (
+                itemRect.left >= parentRect.left &&
+                itemRect.right <= parentRect.right
+            );
+            if (isFullyVisible) {
+                console.log("Element is already fully visible.");
+                return;
+            }
+
+            // Calculate new scroll position
+            const scrollLeftDelta = itemRect.left - parentRect.left;
+            const maxScrollLeft = parentScrollable.scrollWidth - parentScrollable.clientWidth;
+            const newScrollPosition = parentScrollable.scrollLeft + scrollLeftDelta;
+
+            // Boundary checks
+            if (newScrollPosition < 0 || newScrollPosition > maxScrollLeft) {
+                console.log("Scroll limit reached. No scrolling.");
+                return;
+            }
+
+            // Prevent overlapping scrolls
+            if (isScrolling) return;
+            isScrolling = true;
+
+            console.log("Scrolling to:", newScrollPosition);
+            parentScrollable.scrollTo({
+                left: newScrollPosition,
+                behavior: "smooth"
+            });
+
+            // Reset flag when scroll ends
+            parentScrollable.addEventListener('scrollend', () => {
+                isScrolling = false;
+            }, { once: true });
+        });
+    }, 4000);
+</script>
+
+
+
+<div id="load_spatialNav" class="bubble-element Group baTaLaUaN bubble-r-container flex row video_row_container">
+    <div id="load_spatialNav" class="bubble-element RepeatingGroup baTaKaXe bubble-rg video_row"
+        style="overflow: auto;">
+        <div class="bubble-element group-item bubble-r-container flex row entry-1"
+            style="min-height: unset; justify-content: center;">
+            <div class="clickable-element bubble-element Group baTaKaXf bubble-r-container flex column focusable f_box enterkey2click"
+                id="item-1" style="background-color: rgb(0, 0, 0);" tabindex="-1">
+                <div class="bubble-element Image baTaKaXl skeleton-loading">
+                    <div class="aspect-ratio"></div><img
+                        src="https://d1muf25xaso8hp.cloudfront.net/https%3A%2F%2Fae4c2a6e0b49000c392c00804b452eb2.cdn.bubble.io%2Ff1712859010500x856669068366408400%2FImageView.png?w=512&amp;h=289&amp;auto=compress&amp;dpr=1&amp;fit=max"
+                        alt="RoybiVerse Welcome Explorer">
+                </div>
+                <div class="bubble-element Text baTaKaXk">Exploring the Deep Ocean</div>
+                <div class="bubble-element Text baTaKaXj">Imagine a place &nbsp;so deep that is dark and mysterious.
+                    Let's explore! </div>
+                <div class="bubble-element Group baTaKaXr bubble-r-container flex column"></div>
+                <div class="bubble-element RepeatingGroup baTaKaXp bubble-rg" style="overflow: auto;"></div>
+            </div>
+        </div>
+        <div class="bubble-element group-item bubble-r-container flex row entry-2"
+            style="min-height: unset; border-left: 0px none rgb(150, 150, 150); margin-left: 0px; justify-content: center;">
+            <div class="clickable-element bubble-element Group baTaKaXf bubble-r-container flex column focusable f_box enterkey2click"
+                id="item-2" style="background-color: rgb(0, 0, 0);" tabindex="-1">
+                <div class="bubble-element Image baTaKaXl skeleton-loading">
+                    <div class="aspect-ratio"></div><img
+                        src="https://d1muf25xaso8hp.cloudfront.net/https%3A%2F%2Fae4c2a6e0b49000c392c00804b452eb2.cdn.bubble.io%2Ff1712856005683x663562755692145900%2FImageView.png?w=512&amp;h=289&amp;auto=compress&amp;dpr=1&amp;fit=max"
+                        alt="RoybiVerse Welcome Explorer">
+                </div>
+                <div class="bubble-element Text baTaKaXk">The Mysteries of Pyramids</div>
+                <div class="bubble-element Text baTaKaXj">Have you ever wondered how the Egyptian pyramids were built?
+                </div>
+                <div class="bubble-element Group baTaKaXr bubble-r-container flex column"></div>
+                <div class="bubble-element RepeatingGroup baTaKaXp bubble-rg" style="overflow: auto;"></div>
+            </div>
+        </div>
+        <div class="bubble-element group-item bubble-r-container flex row entry-3"
+            style="min-height: unset; border-left: 0px none rgb(150, 150, 150); margin-left: 0px; justify-content: center;">
+            <div class="clickable-element bubble-element Group baTaKaXf bubble-r-container flex column focusable f_box enterkey2click"
+                id="item-3" style="background-color: rgb(0, 0, 0);" tabindex="-1">
+                <div class="bubble-element Image baTaKaXl skeleton-loading">
+                    <div class="aspect-ratio"></div><img
+                        src="https://d1muf25xaso8hp.cloudfront.net/https%3A%2F%2Fae4c2a6e0b49000c392c00804b452eb2.cdn.bubble.io%2Ff1709173656656x937941365076055300%2FImageView%2520%25281%2529.png?w=512&amp;h=289&amp;auto=compress&amp;dpr=1&amp;fit=max"
+                        alt="RoybiVerse Welcome Explorer">
+                </div>
+                <div class="bubble-element Text baTaKaXk">The Ancient Egyptian Art</div>
+                <div class="bubble-element Text baTaKaXj">Let's explore the Egyptian art and its mysterious symbols!
+                </div>
+                <div class="bubble-element Group baTaKaXr bubble-r-container flex column"></div>
+                <div class="bubble-element RepeatingGroup baTaKaXp bubble-rg" style="overflow: auto;"></div>
+            </div>
+        </div>
+        <div class="bubble-element group-item bubble-r-container flex row entry-4"
+            style="min-height: unset; border-left: 0px none rgb(150, 150, 150); margin-left: 0px; justify-content: center;">
+            <div class="clickable-element bubble-element Group baTaKaXf bubble-r-container flex column focusable f_box enterkey2click"
+                id="item-4" style="background-color: rgb(0, 0, 0);" tabindex="-1">
+                <div class="bubble-element Image baTaKaXl skeleton-loading">
+                    <div class="aspect-ratio"></div><img
+                        src="https://d1muf25xaso8hp.cloudfront.net/https%3A%2F%2Fae4c2a6e0b49000c392c00804b452eb2.cdn.bubble.io%2Ff1709161666925x794223174836251600%2FImageView.png?w=512&amp;h=289&amp;auto=compress&amp;dpr=1&amp;fit=max"
+                        alt="RoybiVerse Welcome Explorer">
+                </div>
+                <div class="bubble-element Text baTaKaXk">Our Solar System Planets</div>
+                <div class="bubble-element Text baTaKaXj">There are eight planets in our Solar System. Let's learn
+                    together. </div>
+                <div class="bubble-element Group baTaKaXr bubble-r-container flex column"></div>
+                <div class="bubble-element RepeatingGroup baTaKaXp bubble-rg" style="overflow: auto;"></div>
+            </div>
+        </div>
+        <div class="bubble-element group-item bubble-r-container flex row entry-5"
+            style="min-height: unset; border-left: 0px none rgb(150, 150, 150); margin-left: 0px; justify-content: center;">
+            <div class="clickable-element bubble-element Group baTaKaXf bubble-r-container flex column focusable f_box enterkey2click"
+                id="item-5" style="background-color: rgb(0, 0, 0);" tabindex="-1">
+                <div class="bubble-element Image baTaKaXl skeleton-loading">
+                    <div class="aspect-ratio"></div><img
+                        src="https://d1muf25xaso8hp.cloudfront.net/https%3A%2F%2Fae4c2a6e0b49000c392c00804b452eb2.cdn.bubble.io%2Ff1709087495215x831460295249733000%2FImageView%2520%25281%2529.png?w=512&amp;h=289&amp;auto=compress&amp;dpr=1&amp;fit=max"
+                        alt="RoybiVerse Welcome Explorer">
+                </div>
+                <div class="bubble-element Text baTaKaXk">Dinosaur Island Exploration</div>
+                <div class="bubble-element Text baTaKaXj">The dinosaurs in this mysterious island have a story to tell
+                    you. &nbsp;</div>
+                <div class="bubble-element Group baTaKaXr bubble-r-container flex column"></div>
+                <div class="bubble-element RepeatingGroup baTaKaXp bubble-rg" style="overflow: auto;"></div>
+            </div>
+        </div>
+        <div class="bubble-element group-item bubble-r-container flex row entry-6"
+            style="min-height: unset; border-left: 0px none rgb(150, 150, 150); margin-left: 0px; justify-content: center;">
+            <div class="clickable-element bubble-element Group baTaKaXf bubble-r-container flex column focusable f_box enterkey2click"
+                id="item-6" style="background-color: rgb(0, 0, 0);" tabindex="-1">
+                <div class="bubble-element Image baTaKaXl skeleton-loading">
+                    <div class="aspect-ratio"></div><img
+                        src="https://d1muf25xaso8hp.cloudfront.net/https%3A%2F%2Fae4c2a6e0b49000c392c00804b452eb2.cdn.bubble.io%2Ff1709002425968x335636185859059700%2FImageView.png?w=512&amp;h=289&amp;auto=compress&amp;dpr=1&amp;fit=max"
+                        alt="RoybiVerse Welcome Explorer">
+                </div>
+                <div class="bubble-element Text baTaKaXk">Greek and Roman Art History</div>
+                <div class="bubble-element Text baTaKaXj">Greek artists are known for their geometric art and precision.
+                </div>
+                <div class="bubble-element Group baTaKaXr bubble-r-container flex column"></div>
+                <div class="bubble-element RepeatingGroup baTaKaXp bubble-rg" style="overflow: auto;"></div>
+            </div>
+        </div>
+        <div class="bubble-element group-item bubble-r-container flex row entry-7"
+            style="min-height: unset; border-left: 0px none rgb(150, 150, 150); margin-left: 0px; justify-content: center;">
+            <div class="clickable-element bubble-element Group baTaKaXf bubble-r-container flex column focusable f_box enterkey2click"
+                id="item-7" style="background-color: rgb(0, 0, 0);" tabindex="-1">
+                <div class="bubble-element Image baTaKaXl skeleton-loading">
+                    <div class="aspect-ratio"></div><img
+                        src="https://d1muf25xaso8hp.cloudfront.net/https%3A%2F%2Fae4c2a6e0b49000c392c00804b452eb2.cdn.bubble.io%2Ff1708995202510x239699271307065600%2FImageView%2520%25282%2529.png?w=512&amp;h=289&amp;auto=compress&amp;dpr=1&amp;fit=max"
+                        alt="RoybiVerse Welcome Explorer">
+                </div>
+                <div class="bubble-element Text baTaKaXk">The History of Halloween</div>
+                <div class="bubble-element Text baTaKaXj">Trick or Treating is one of kids most favorite activities. But
+                    how did it start? </div>
+                <div class="bubble-element Group baTaKaXr bubble-r-container flex column"></div>
+                <div class="bubble-element RepeatingGroup baTaKaXp bubble-rg" style="overflow: auto;"></div>
+            </div>
+        </div>
+        <div class="bubble-element group-item bubble-r-container flex row entry-8"
+            style="min-height: unset; border-left: 0px none rgb(150, 150, 150); margin-left: 0px; justify-content: center;">
+            <div class="clickable-element bubble-element Group baTaKaXf bubble-r-container flex column focusable f_box enterkey2click"
+                id="item-8" style="background-color: rgb(0, 0, 0);" tabindex="-1">
+                <div class="bubble-element Image baTaKaXl skeleton-loading">
+                    <div class="aspect-ratio"></div><img
+                        src="https://d1muf25xaso8hp.cloudfront.net/https%3A%2F%2Fae4c2a6e0b49000c392c00804b452eb2.cdn.bubble.io%2Ff1708453098729x867246037944920400%2FImageView.png?w=512&amp;h=289&amp;auto=compress&amp;dpr=1&amp;fit=max"
+                        alt="RoybiVerse Welcome Explorer">
+                </div>
+                <div class="bubble-element Text baTaKaXk">How We Deal with Space Debris</div>
+                <div class="bubble-element Text baTaKaXj">If you're wondering what happens to the debris in the space,
+                    watch this. </div>
+                <div class="bubble-element Group baTaKaXr bubble-r-container flex column"></div>
+                <div class="bubble-element RepeatingGroup baTaKaXp bubble-rg" style="overflow: auto;"></div>
+            </div>
+        </div>
+        <div class="bubble-element group-item bubble-r-container flex row entry-9"
+            style="min-height: unset; border-left: 0px none rgb(150, 150, 150); margin-left: 0px; justify-content: center;">
+            <div class="clickable-element bubble-element Group baTaKaXf bubble-r-container flex column focusable f_box enterkey2click"
+                id="item-9" style="background-color: rgb(0, 0, 0);" tabindex="-1">
+                <div class="bubble-element Image baTaKaXl skeleton-loading">
+                    <div class="aspect-ratio"></div><img
+                        src="https://d1muf25xaso8hp.cloudfront.net/https%3A%2F%2Fae4c2a6e0b49000c392c00804b452eb2.cdn.bubble.io%2Ff1707524743908x121409104874215000%2FImageView.png?w=512&amp;h=289&amp;auto=compress&amp;dpr=1&amp;fit=max"
+                        alt="RoybiVerse Welcome Explorer">
+                </div>
+                <div class="bubble-element Text baTaKaXk">Gravity Games in the Galaxy</div>
+                <div class="bubble-element Text baTaKaXj">Let's watch this to understand how gravity works in our
+                    galaxy. </div>
+                <div class="bubble-element Group baTaKaXr bubble-r-container flex column"></div>
+                <div class="bubble-element RepeatingGroup baTaKaXp bubble-rg" style="overflow: auto;"></div>
+            </div>
+        </div>
+        <div class="bubble-element group-item bubble-r-container flex row entry-10"
+            style="min-height: unset; border-left: 0px none rgb(150, 150, 150); margin-left: 0px; justify-content: center;">
+            <div class="clickable-element bubble-element Group baTaKaXf bubble-r-container flex column focusable f_box enterkey2click"
+                id="item-10" style="background-color: rgb(0, 0, 0);" tabindex="-1">
+                <div class="bubble-element Image baTaKaXl skeleton-loading">
+                    <div class="aspect-ratio"></div><img
+                        src="https://d1muf25xaso8hp.cloudfront.net/https%3A%2F%2Fae4c2a6e0b49000c392c00804b452eb2.cdn.bubble.io%2Ff1707351222114x675682489659070500%2FImageView%2520%25281%2529.png?w=512&amp;h=289&amp;auto=compress&amp;dpr=1&amp;fit=max"
+                        alt="RoybiVerse Welcome Explorer">
+                </div>
+                <div class="bubble-element Text baTaKaXk">The Happy Cloud Adventure</div>
+                <div class="bubble-element Text baTaKaXj">Join Sunny and his friends on an exciting journey to learn to
+                    smile. </div>
+                <div class="bubble-element Group baTaKaXr bubble-r-container flex column"></div>
+                <div class="bubble-element RepeatingGroup baTaKaXp bubble-rg" style="overflow: auto;"></div>
+            </div>
+        </div>
+        <div class="bubble-element group-item bubble-r-container flex row entry-11"
+            style="min-height: unset; border-left: 0px none rgb(150, 150, 150); margin-left: 0px; justify-content: center;">
+            <div class="clickable-element bubble-element Group baTaKaXf bubble-r-container flex column focusable f_box enterkey2click"
+                id="item-11" style="background-color: rgb(0, 0, 0);" tabindex="-1">
+                <div class="bubble-element Image baTaKaXl skeleton-loading">
+                    <div class="aspect-ratio"></div><img
+                        src="https://d1muf25xaso8hp.cloudfront.net/https%3A%2F%2Fae4c2a6e0b49000c392c00804b452eb2.cdn.bubble.io%2Ff1707175680844x527820980423657540%2FImageView%2520%25283%2529.png?w=512&amp;h=289&amp;auto=compress&amp;dpr=1&amp;fit=max"
+                        alt="RoybiVerse Welcome Explorer">
+                </div>
+                <div class="bubble-element Text baTaKaXk">Brave Benny Bear's Adventure</div>
+                <div class="bubble-element Text baTaKaXj">Let's get on a journey with Benny &amp; his friends to face
+                    fears together. </div>
+                <div class="bubble-element Group baTaKaXr bubble-r-container flex column"></div>
+                <div class="bubble-element RepeatingGroup baTaKaXp bubble-rg" style="overflow: auto;"></div>
+            </div>
+        </div>
+        <div class="bubble-element group-item bubble-r-container flex row entry-12"
+            style="min-height: unset; border-left: 0px none rgb(150, 150, 150); margin-left: 0px; justify-content: center;">
+            <div class="clickable-element bubble-element Group baTaKaXf bubble-r-container flex column focusable f_box enterkey2click"
+                id="item-12" style="background-color: rgb(0, 0, 0);" tabindex="-1">
+                <div class="bubble-element Image baTaKaXl skeleton-loading">
+                    <div class="aspect-ratio"></div><img
+                        src="https://d1muf25xaso8hp.cloudfront.net/https%3A%2F%2Fae4c2a6e0b49000c392c00804b452eb2.cdn.bubble.io%2Ff1706827354621x824090588109578400%2FImageView%2520%25282%2529.png?w=512&amp;h=289&amp;auto=compress&amp;dpr=1&amp;fit=max"
+                        alt="RoybiVerse Welcome Explorer">
+                </div>
+                <div class="bubble-element Text baTaKaXk">Top 5 Speedy Dinosaurs</div>
+                <div class="bubble-element Text baTaKaXj">Let's compare 5 speedy dinosaurs to their animal counterparts.
+                </div>
+                <div class="bubble-element Group baTaKaXr bubble-r-container flex column"></div>
+                <div class="bubble-element RepeatingGroup baTaKaXp bubble-rg" style="overflow: auto;"></div>
+            </div>
+        </div>
+        <div class="bubble-element group-item bubble-r-container flex row entry-13"
+            style="min-height: unset; border-left: 0px none rgb(150, 150, 150); margin-left: 0px; justify-content: center;">
+            <div class="clickable-element bubble-element Group baTaKaXf bubble-r-container flex column focusable f_box enterkey2click"
+                id="item-13" style="background-color: rgb(0, 0, 0);" tabindex="-1">
+                <div class="bubble-element Image baTaKaXl skeleton-loading">
+                    <div class="aspect-ratio"></div><img
+                        src="https://d1muf25xaso8hp.cloudfront.net/https%3A%2F%2Fae4c2a6e0b49000c392c00804b452eb2.cdn.bubble.io%2Ff1706826025363x888206358982020900%2FImageView%2520%25281%2529.png?w=512&amp;h=289&amp;auto=compress&amp;dpr=1&amp;fit=max"
+                        alt="RoybiVerse Welcome Explorer">
+                </div>
+                <div class="bubble-element Text baTaKaXk">Top 10 Coolest Dinosaurs</div>
+                <div class="bubble-element Text baTaKaXj">Check out the top 10 coolest dinosaurs and why they are so
+                    unique. </div>
+                <div class="bubble-element Group baTaKaXr bubble-r-container flex column"></div>
+                <div class="bubble-element RepeatingGroup baTaKaXp bubble-rg" style="overflow: auto;"></div>
+            </div>
+        </div>
+        <div class="bubble-element group-item bubble-r-container flex row entry-14"
+            style="min-height: unset; border-left: 0px none rgb(150, 150, 150); margin-left: 0px; justify-content: center;">
+            <div class="clickable-element bubble-element Group baTaKaXf bubble-r-container flex column focusable f_box enterkey2click"
+                id="item-14" style="background-color: rgb(0, 0, 0);" tabindex="-1">
+                <div class="bubble-element Image baTaKaXl skeleton-loading">
+                    <div class="aspect-ratio"></div><img
+                        src="https://d1muf25xaso8hp.cloudfront.net/https%3A%2F%2Fae4c2a6e0b49000c392c00804b452eb2.cdn.bubble.io%2Ff1706826229828x412071381124641900%2FImageView.png?w=512&amp;h=289&amp;auto=compress&amp;dpr=1&amp;fit=max"
+                        alt="RoybiVerse Welcome Explorer">
+                </div>
+                <div class="bubble-element Text baTaKaXk">The Land of Lost Dinosaurs</div>
+                <div class="bubble-element Text baTaKaXj">Come with us on this journey to find the lost land of
+                    dinosaurs.</div>
+                <div class="bubble-element Group baTaKaXr bubble-r-container flex column"></div>
+                <div class="bubble-element RepeatingGroup baTaKaXp bubble-rg" style="overflow: auto;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<script>
+    setTimeout(() => {
+        console.log("TV-like focus behavior active after 4s delay");
+
+        const TARGET_POSITION = 20; // Pixels from container's left edge
+        let isScrolling = false;
+
+        document.addEventListener("focusin", (event) => {
+            const item = event.target;
+            if (!item.classList.contains("focusable")) return;
+
+            const scrollContainer = item.closest(".video_row");
+            if (!scrollContainer) return;
+
+            // Prevent interference with ongoing scroll
+            if (isScrolling) return;
+
+            // Get positioning measurements
+            const containerRect = scrollContainer.getBoundingClientRect();
+            const itemRect = item.getBoundingClientRect();
+
+            // Calculate ideal scroll position to land item at TARGET_POSITION
+            const scrollDelta = itemRect.left - containerRect.left - TARGET_POSITION;
+            let targetScroll = scrollContainer.scrollLeft + scrollDelta;
+
+            // Contain within scrollable bounds
+            const maxScroll = scrollContainer.scrollWidth - scrollContainer.clientWidth;
+            targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
+
+            // Check if scroll needed
+            if (Math.abs(scrollContainer.scrollLeft - targetScroll) < 5) {
+                console.log("Already in target position");
+                return;
+            }
+
+            // Start scroll process
+            isScrolling = true;
+            console.log(`Scrolling to ${targetScroll} (${scrollDelta}px adjustment)`);
+
+            // Netflix-style visual feedback
+            item.classList.add("focused-item");
+            scrollContainer.addEventListener("scrollend", () => {
+                item.classList.remove("focused-item");
+                isScrolling = false;
+            }, { once: true });
+
+            // Execute smooth scroll
+            scrollContainer.scrollTo({
+                left: targetScroll,
+                behavior: "smooth"
+            });
+        });
+    }, 4000);
+</script>
+
+<style>
+    /* Netflix-style focus animation */
+    .focused-item {
+        transform: scale(1.1);
+        transition: transform 0.3s ease;
+        z-index: 2;
+        /* Bring focused item above others */
+    }
+</style>
+
+
+<script>
+
+    (function () {
+        // Visibility change handler
+        document.addEventListener("visibilitychange", function () {
+            if (document.hidden) {
+                console.log("[Visibility Change] App is no longer visible - triggering redirect...");
+
+                // Determine Bubble.io environment path
+                const basePath = window.location.pathname.includes('/version-test/')
+                    ? '/version-test/'
+                    : '/';
+
+                // Get TV app origin with fallback
+                const tvOrigin = window.location.origin ||
+                    window.location.protocol + "//" + window.location.host;
+                console.log(`[TV Origin] Attempting redirect to: ${tvOrigin}`);
+
+                // First redirect attempt
+                window.location.href = tvOrigin;
+                console.log(`[Redirect Initiated] Trying TV app at: ${tvOrigin}`);
+
+                // Fallback mechanism
+                setTimeout(() => {
+                    if (window.location.href !== tvOrigin) {
+                        const fallbackUrl = window.location.origin + basePath;
+                        console.warn(`[Fallback] TV app unreachable at ${tvOrigin}`);
+                        console.log(`[Final Redirect] Navigating to: ${fallbackUrl}`);
+                        window.location.href = fallbackUrl;
+                    }
+                }, 3000);
+            } else {
+                console.log("[Visibility Change] App is visible again");
+            }
+        });
+    })();
+
+</script>
+
+
+<script>
+    (function () {
+        // Check if the user agent contains both 'SMART-TV' and 'Tizen'
+        if (navigator.userAgent.includes('SMART-TV') && navigator.userAgent.includes('Tizen')) {
+            // Visibility change handler
+            document.addEventListener("visibilitychange", function () {
+                if (document.hidden) {
+                    console.log("[Visibility Change] App is no longer visible, redirecting...");
+                    const basePathing = window.location.pathname.includes('/version-test/')
+                        ? '/version-test/'
+                        : '/';
+
+                    // Create full base URL
+                    //var baseUrl = window.location.origin + basePathing;
+                    var baseUrl = 'localhost';
+                    window.location.href = baseUrl;
+
+                } else {
+                    console.log("[Visibility Change] App is visible again");
+                }
+            });
+        }
+    })();
+</script>
+
+
+<script>
+    // Attach a single 'focusin' event listener to the document
+    document.addEventListener('focusin', (event) => {
+
+        // Check if the focused element is inside the '.scrolltop' div
+        const scrolltopDiv = document.querySelector('.scrolltop');
+        if (scrolltopDiv && scrolltopDiv.contains(event.target)) {
+            // Check if the focused element has the class 'focusable'
+            if (event.target.classList.contains('focusable')) {
+                // Log the event to the console
+                console.log('Focused element:', event.target);
+
+                // Scroll to the top of the page with smooth behavior
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth',
+                });
+            }
+        }
+
+
+    });
+</script>
+
+
+<script>
+    // Attach a single 'focusin' event listener to the document
+    document.addEventListener('focusin', (event) => {
+        // Check if the focused element has the class 'focusable'
+        if (event.target.classList.contains('focusable')) {
+            // Log the event to the console
+            console.log('Focused element:', event.target);
+
+            // Find the closest '.vscroll' ancestor
+            const scrollDiv = event.target.closest('.vscroll');
+            if (scrollDiv) {
+                // Define the desired Y position within the viewport (e.g., 100px from the top)
+                const desiredYPosition = 100;
+
+                // Get the position of the '.vscroll' element relative to the viewport
+                const rect = scrollDiv.getBoundingClientRect();
+                const scrollDivTop = rect.top;
+
+                // Calculate the scroll position needed to align the '.vscroll' element at the desired Y position
+                const scrollPosition = scrollDivTop + window.scrollY - desiredYPosition;
+
+                // Scroll the window to the calculated position
+                window.scrollTo({
+                    top: scrollPosition,
+                    behavior: 'smooth', // Optional: adds smooth scrolling effect
+                });
+            } else {
+                console.log('No .vscroll ancestor found.');
+            }
+        }
+    }, true); // Use capturing phase to ensure the event is caught
+</script>
+
+
+
+<script>
+    // Attach a single 'focusin' event listener to the document
+    document.addEventListener('focusin', (event) => {
+        // Check if the focused element has the class 'focusable'
+        if (event.target.classList.contains('focusable')) {
+            // Log the event to the console
+            console.log('Focused element:', event.target);
+
+            // Find the closest '.vscroll' ancestor
+            const scrollDiv = event.target.closest('.vscroll');
+            if (scrollDiv) {
+                // Define the desired Y position within the viewport (e.g., 100px from the top)
+                const desiredYPosition = 100;
+
+                // Get the position of the '.vscroll' element relative to the viewport
+                const rect = scrollDiv.getBoundingClientRect();
+                const scrollDivTop = rect.top;
+
+                // Calculate the scroll position needed to align the '.vscroll' element at the desired Y position
+                const scrollPosition = scrollDivTop + window.scrollY - desiredYPosition;
+
+                // Scroll the window to the calculated position
+                window.scrollTo({
+                    top: scrollPosition,
+                    behavior: 'smooth', // Optional: adds smooth scrolling effect
+                });
+            } else {
+                console.log('No .vscroll ancestor found.');
+            }
+        }
+    }, true); // Use capturing phase to ensure the event is caught
+</script>
+
+
+<script>
+    // Attach a single 'focusin' event listener to the document
+    document.addEventListener('focusin', (event) => {
+        // Check if the focused element has the class 'focusable'
+        if (event.target.classList.contains('focusable')) {
+            // GENERATE CODE TO ADD A CHECK FOR CLASS vscroll on the same element
+
+
+        }
+    }, true); // Use capturing phase to ensure the event is caught
+</script>
+
+
+
+
+
+
+<script>
+    // Attach a single 'focusin' event listener to the document
+    document.addEventListener('focusin', (event) => {
+        // Check if the focused element is inside the '.scrolltop' div
+        const scrolltopDiv = document.querySelector('.scrolltop');
+        if (scrolltopDiv && scrolltopDiv.contains(event.target)) {
+            // Check if the focused element has the class 'focusable'
+            if (event.target.classList.contains('focusable')) {
+                // Log the event to the console
+                // console.log('Focused element:', event.target);
+
+                // Scroll to the top of the page with smooth behavior
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth',
+                });
+            }
+        }
+    });
+
+</script>
+
+<script>
+    // Attach a single 'focusin' event listener to the document
+    document.addEventListener('focusin', (event) => {
+        // Check if the focused element has the class 'focusable'
+        if (event.target.classList.contains('focusable')) {
+            // Log the event to the console
+            console.log('Focused element:', event.target);
+
+            // Find the closest '.vscroll' ancestor
+            const scrollDiv = event.target.closest('.vscroll');
+            if (scrollDiv) {
+                // Define the desired Y position within the viewport (e.g., 100px from the top)
+                const desiredYPosition = 240;
+
+                // Get the position of the '.vscroll' element relative to the viewport
+                const rect = scrollDiv.getBoundingClientRect();
+                const scrollDivTop = rect.top;
+
+                // Calculate the scroll position needed to align the '.vscroll' element at the desired Y position
+                const scrollPosition = scrollDivTop + window.scrollY - desiredYPosition;
+
+                // Scroll the window to the calculated position
+                window.scrollTo({
+                    top: scrollPosition,
+                    behavior: 'smooth', // Optional: adds smooth scrolling effect
+                });
+            } else {
+                console.log('No .vscroll ancestor found.');
+            }
+        }
+    }, true); // Use capturing phase to ensure the event is caught
+</script>
+
+
+
+
+<script>
+
+    document.addEventListener('focusin', (event) => {
+        const target = event.target;
+
+        // Check if the focused element is the parent container with both 'focusable' and 'vscroll' classes
+        if (target.classList.contains('focusable') && target.classList.contains('vscroll')) {
+            // Only proceed if the container itself is directly focused
+            if (target === document.activeElement) {
+                // Find the first child element with the class 'focusable'
+                const firstFocusableChild = target.querySelector('.focusable');
+                if (firstFocusableChild) {
+                    // Set focus on the first child element
+                    firstFocusableChild.focus();
+                    // Remove the 'focusable' class from the parent container
+                    target.classList.remove('focusable');
+                    // Add the 'in-focus' class to the parent container
+                    target.classList.add('in-focus');
+                    console.log('Focus set to first child. Removed "focusable" and added "in-focus" to parent container.');
+                }
+            }
+        }
+
+        if (target.classList.contains('focusable') && target.classList.contains('f_box')) {
+            const parent = event.target.closest('.vscroll')
+            if (parent) {
+                console.log('This element has a parent with class "vscroll":', parent);
+                if (parent.classList.contains('in-focus')) {
+                    //CODE HERE
+                    cancelClassAdd();
+                }
+            }
+        }
+
+    }, true); // Using capturing phase
+</script>
+
+<script>
+    document.addEventListener('focusout', (event) => {
+        if (event.target.classList.contains('focusable')) {
+            console.log('Focus out happened on an element with class "focusable":', event.target);
+
+            // Check if the target has an ancestor with the class "vscroll"
+            const parentVscroll = event.target.closest('.vscroll');
+            if (parentVscroll) {
+                console.log('This element has a parent with class "vscroll":', parentVscroll);
+
+                // Branch conditional check on the parentVscroll element
+                if (parentVscroll.classList.contains('in-focus')) {
+                    console.log('Parent vscroll element has the "in-focus" class.');
+                    //parentVscroll.classList.add('focusable');
+                    scheduleClassAdd(parentVscroll, 'focusable', 2000);
+
+                } else if (parentVscroll.classList.contains('focusable')) {
+                    console.log('Parent vscroll element has the "focusable" class.');
+                } else {
+                    console.log('Parent vscroll element has neither "in-focus" nor "focusable" classes.');
+                }
+            }
+        }
+    }, true); // Using capturing phase
+</script>
+
+
+
+<script>
+    // Focus Control //
+    document.addEventListener('focusin', (event) => {
+
+        const target = event.target;
+        const main = document.querySelector('#repeating_group')
+
+        if (target.classList.contains('focusable') && target.classList.contains('f_box')) {
+
+            const parent = event.target.closest('.vscroll')
+
+            if (parent && main) {
+
+                if (parent.dataset.cellfocusID === undefined || parent.dataset.cellfocusID === "") {
+
+                    const firstFocusableChild = parent.querySelector('.focusable');
+
+                    if (firstFocusableChild) {
+                        console.log("Found first focusable child:", firstFocusableChild);
+                        firstFocusableChild.focus();
+                        const focusedChildId = firstFocusableChild.id;
+
+                        // Set the rowfocus data to parent.id
+                        main.dataset.rowfocusID = parent.id;
+                        // Set the cellfocus to focusedChildID (first item)
+                        parent.dataset.cellfocusID = focusedChildId;
+
+                        console.log("data-rowfocusID set:", main.dataset.fowfocusID);
+                        console.log("data-cellFocusID set:", parent.dataset.cellfocusID);
+
+                    } else {
+                        console.log("No focusable child found.");
+                    }
+                }
+
+                if (main.dataset.rowfocusID && parent.dataset.cellfocusID) {
+
+                    const stored_cell_focus = parent.querySelector(`#${parent.dataset.cellfocusID}`);
+                    const stored_row_focus = main.querySelector(`#${main.dataset.rowfocusID}`);
+
+                    // Need to check if Rows have changed.
+                    if (main.dataset.rowfocus !== parent.id) {
+                        // Entered different <div class="vscroll"> so set focus to the stored cell
+                        saved_cell_focus.focus();
+                        // update rowfocusID to current <div class="vscroll"> we are in. 
+                        main.dataset.rowfocus = partent.id;
+                    }
+                    // if NO Row change then update cell focus to ID of current target
+                    if (main.dataset.rowfocus === parent.id) {
+                        // update cellfocusID with current target of <div class="focusable f_box" id="{value}"> we are in. 
+                        parent.dataset.cellfocus = target.id;
+                    }
+
+
+
+                }
+
+            }
+        }
+
+    }, true); // Using capturing phase
+
+</script>
+
+
+<script>
+    // Focus control REVISED 2/26/2025 8:10PM
+
+    // Use this to make certain spatial_navigation.js does not interfer. 
+    function trySetFocus(element, maxRetries = 5, delay = 50) {
+        let attempts = 0;
+
+        function attemptFocus() {
+            element.focus();
+
+            if (document.activeElement === element) {
+                console.log("✅ Focus correctly set to:", element.id);
+            } else if (attempts < maxRetries) {
+                attempts++;
+                console.log(`⚠️ Retry ${attempts}/${maxRetries} - Focus failed for:`, element.id);
+                setTimeout(attemptFocus, delay);
+            } else {
+                console.log("❌ Final attempt failed to set focus to:", element.id);
+            }
+        }
+
+        attemptFocus();
+    }
+
+    // Focus Control REVISED //
+    document.addEventListener('focusin', (event) => {
+
+        const target = event.target;
+        const main = document.querySelector('#repeating_group');
+
+        if (target.classList.contains('focusable') && target.classList.contains('f_box')) {
+
+            const parent = event.target.closest('.vscroll');
+
+            if (parent && main) {
+
+                if (!parent.dataset.cellfocusID) {
+
+                    const firstFocusableChild = parent.querySelector('.focusable');
+
+                    if (firstFocusableChild) {
+                        console.log("Found first focusable child:", firstFocusableChild);
+                        firstFocusableChild.focus();
+                        const focusedChildId = firstFocusableChild.id;
+
+                        // Set the rowfocus data to parent.id
+                        main.dataset.rowfocusID = parent.id;
+                        // Set the cellfocus to focusedChildID (first item)
+                        parent.dataset.cellfocusID = focusedChildId;
+
+                        console.log("data-rowfocusID set:", main.dataset.rowfocusID);
+                        console.log("data-cellFocusID set:", parent.dataset.cellfocusID);
+
+                    } else {
+                        console.log("No focusable child found.");
+                    }
+                }
+
+                if (main.dataset.rowfocusID && parent.dataset.cellfocusID) {
+
+                    const stored_cell_focus = parent.querySelector(`#${parent.dataset.cellfocusID}`);
+                    const stored_row_focus = main.querySelector(`#${main.dataset.rowfocusID}`);
+
+                    // Need to check if Rows have changed.
+                    if (main.dataset.rowfocusID !== parent.id) {
+
+                        // Entered different <div class="vscroll"> so set focus to the stored cell
+                        stored_cell_focus.focus();
+
+                        trySetFocus(stored_cell_focus, 5, 50);
+
+                        // Update rowfocusID to current <div class="vscroll"> we are in.
+                        main.dataset.rowfocusID = parent.id;
+                        console.log("Row Focus data to:", main.dataset.rowfocusID);
+
+                    }
+
+                    // If NO Row change, then update cell focus to the ID of the current target
+                    if (main.dataset.rowfocusID === parent.id) {
+                        // Update cellfocusID with the current target inside <div class="focusable f_box" id="{value}">
+                        // This appears to let spatial_navigation.js have it's way with things.  Need a double check.    
+                        parent.dataset.cellfocusID = target.id;
+                        console.log("Cell Focus data to:", parent.dataset.cellfocusID);
+                    }
+
+                }
+
+            }
+        }
+
+    }, true); // Using capturing phase
+</script>
+
+
+
+
+<script>
+    // Attach a single 'focusin' event listener to the document
+
+    document.addEventListener('focusin', (event) => {
+        // Check if the focused element is inside the '.scrolltop' div
+        const scrolltopDiv = document.querySelector('.scrolltop');
+        if (scrolltopDiv && scrolltopDiv.contains(event.target)) {
+            // Check if the focused element has the class 'focusable'
+            if (event.target.classList.contains('focusable')) {
+                // Log the event to the console
+                // console.log('Focused element:', event.target);
+
+                // Scroll to the top of the page with smooth behavior
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth',
+                });
+            }
+        }
+    });
+
+</script>
+
+
+<script>
+    // Attach a single 'focusin' event listener to the document
+    document.addEventListener('focusin', (event) => {
+        // Check if the focused element is inside the '.scrolltop' div
+        const scrolltopDiv = document.querySelector('.scrolltop');
+        if (scrolltopDiv && scrolltopDiv.contains(event.target)) {
+            // Check if the focused element has the class 'focusable'
+            if (event.target.classList.contains('focusable')) {
+                // Log the event to the console
+                // console.log('Focused element:', event.target);
+
+                // Scroll to the top of the page with smooth behavior
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth',
+                });
+            }
+        }
+    });
+
+</script>
+
+
+<script>
+    document.addEventListener('focusin', (event) => {
+        // Check if the focused element has the class 'focusable'
+        if (event.target.classList.contains('focusable')) {
+            // Log the event to the console
+            console.log('Focused element:', event.target);
+
+            // Find the closest '.vscroll' ancestor
+            const scrollDiv = event.target.closest('.vscroll');
+            if (scrollDiv) {
+                // Define the desired Y position within the viewport (e.g., 100px from the top)
+                const desiredYPosition = 240;
+
+                // Get the position of the '.vscroll' element relative to the viewport
+                const rect = scrollDiv.getBoundingClientRect();
+                const scrollDivTop = rect.top;
+
+                // Calculate the scroll position needed to align the '.vscroll' element at the desired Y position
+                const scrollPosition = scrollDivTop + window.scrollY - desiredYPosition;
+
+                // Scroll the window to the calculated position
+                window.scrollTo({
+                    top: scrollPosition,
+                    behavior: 'smooth', // Optional: adds smooth scrolling effect
+                });
+            } else {
+                console.log('No .vscroll ancestor found.');
+            }
+        }
+    }, true); // Use capturing phase to ensure the event is caught
+</script>
+
+
+
+<script type="text/javascript" defer>
+
+    const getPageKey = () => window.location.pathname + window.location.search;
+    const MAX_RETRIES = 20; // 20 attempts * 100ms = 2 seconds
+
+    // 1. Focus Storage
+    function handleFocusIn(event) {
+        const element = event.target;
+        if (element.id) {
+            console.log('Focus detected and Saved on:', element.id, 'on page:', getPageKey);
+            localStorage.setItem(`focusState_${getPageKey()}`, JSON.stringify({
+                id: element.id,
+                timestamp: Date.now()
+            }));
+        }
+    }
+
+    // 2. Focus Restoration
+    function restoreFocus() {
+
+        console.log("RESTORE FOCUS FUNCTION CALLED!");
+        const pageKey = getPageKey();
+        const storedData = localStorage.getItem(`focusState_${pageKey}`);
+
+        if (storedData) {
+            const { id } = JSON.parse(storedData);
+            let attempts = 0;
+            let focusChecks = 0;
+
+            const retryInterval = setInterval(() => {
+                attempts++;
+                const element = document.getElementById(id);
+
+                if (element) {
+                    try {
+                        element.focus();
+                    } catch (error) {
+                        console.log("Focus failed silently");
+                    }
+
+                    // Verify if the focus is correctly set
+                    const checkFocusInterval = setInterval(() => {
+                        focusChecks++;
+                        if (document.activeElement === element) {
+                            clearInterval(checkFocusInterval);
+                        } else if (focusChecks >= 5) {
+                            element.focus(); // Retry setting focus if not matched
+                            focusChecks = 0; // Reset check counter
+                        }
+                    }, 200);
+
+                    clearInterval(retryInterval);
+                } else if (attempts >= MAX_RETRIES) {
+                    clearInterval(retryInterval);
+                }
+            }, 100);
+        }
+    }
+
+    window.addEventListener('pageshow', restoreFocus);
+    document.addEventListener('focusin', handleFocusIn);
+
+</script>
+
+
+<script defer>
+    const STORAGE_TTL = 86400000; // 24 hours in milliseconds (adjust as needed)    
+    function CleanupKeys() {
+        // Cleanup old entries once per page load
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('focusState_')) {
+                try {
+                    const item = JSON.parse(localStorage.getItem(key));
+                    if (item && typeof item === 'object' && 'timestamp' in item) {
+                        if (Date.now() - item.timestamp > STORAGE_TTL) {
+                            localStorage.removeItem(key);
+                        }
+                    }
+                } catch {
+                    // console.error('CleanUpKeys() Error parsing localStorage item for key:', key, error);
+                }
+            }
+        })
+    };
+    window.addEventListener('pageshow', CleanupKeys);
+</script>
+
+
+<script>
+    function DeleteALLFocusKeys() {
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('focusState_')) {
+                localStorage.removeItem(key);
+            }
+        });
+    };
+</script>
+
+
+<script>
+    /*
+    * Custom Spatial Navigation setup and control
+    * Handles Mutations on DOM
+    * All focusable Elements should have the class="focusable"
+    * assigned to them in HTML for this to work
+    */
+
+    (function () {
+
+        // Configuration Vars
+        var startFocusElementSelect = '.focusable';
+        var loadingElementID = 'load_spatialNav';
+        // internal use Wars
+        var isSpatialNavInitialized = false;
+
+        // Function to asynchronously find the starting focus element
+        function getStartFocus() {
+            var elementSelector = startFocusElementSelect;
+            var maxAttempts = 10;
+            var interval = 300; // milliseconds
+            var durationInSeconds = 3;
+            var duration = durationInSeconds * 1000; // Convert duration to milliseconds
+
+            return new Promise(function (resolve, reject) {
+                var attempts = 0;
+                var startTime = Date.now();
+
+                function findElement() {
+                    var element = document.querySelector(elementSelector);
+                    if (element) {
+                        resolve(element);
+                    } else if (attempts < maxAttempts && (Date.now() - startTime) < duration) {
+                        attempts++;
+                        setTimeout(findElement, interval);
+                    } else {
+                        reject(new Error('Element not found within the specified time and attempts.'));
+                    }
+                }
+                findElement();
+            });
+        }
+
+        function SpatialNav() {
+
+            // Initialize SpatialNavigation if not already initialized
+            if (!isSpatialNavInitialized) {
+                SpatialNavigation.init();
+                isSpatialNavInitialized = true;
+            }
+
+            // Add focusable elements
+            SpatialNavigation.add({
+                selector: ".focusable",
+            });
+
+            SpatialNavigation.makeFocusable();
+
+            const focusedElement = document.activeElement;
+
+            if (!focusedElement || !focusedElement.classList.contains('focusable')) {
+                // updated to work with a promises
+                getStartFocus()
+                    .then(function (startFocusElement) {
+                        console.log('SPATIAL NAV - Start focus element found:', startFocusElement);
+                        SpatialNavigation.focus(startFocusElement);
+                        startFocusElement.focus();
+                        // Starting focus element
+                    })
+                    .catch(function (error) {
+                        console.error('Error:', error.message);
+                    });
+            }
+
+        }
+
+        // Dealing with total counts since detection of actually mutations on nodes by specific class do not work with bubble
+        var focusableCount = 0;
+
+        // Function to update the count of elements with class "focusable"
+        function updateFocusableCount() {
+            const targetNode = document.getElementById(loadingElementID);
+            if (!targetNode) return;
+
+            const focusableElements = targetNode.querySelectorAll('.focusable');
+            const newCount = focusableElements.length;
+
+            // Call function only if the count has changed
+            if (newCount !== focusableCount) {
+                focusableCount = newCount;
+                handleFocusableCountChange();
+            }
+        }
+
+        // Function to handle focusable count change
+        function handleFocusableCountChange() {
+            console.log('Spatial Nav - Focusable count changed:', focusableCount);
+            // Call any function or perform any action here
+            SpatialNav();
+        }
+
+        // Function to be executed when target element changes
+        function onChangeCallback(mutationsList, observer) {
+            updateFocusableCount();
+        }
+
+        // Initialize the observer
+        function initializeObserver(targetNode) {
+            // Options for the observer (which mutations to observe from Bubble.io India Lag fest) 
+            const config = { childList: true, subtree: true };
+            // Create an observer instance linked callback function
+            const observer = new MutationObserver(onChangeCallback);
+            // Start observing the target node for configured mutations
+            observer.observe(targetNode, config);
+        }
+
+
+        // Function to periodically check for the presence of the target node (hydration check)!
+        function waitForTargetNode() {
+            const targetNode = document.getElementById(loadingElementID);
+            if (targetNode) {
+                console.log("TARGET NODE FOR SPATIAL OS FOUND");
+                SpatialNav();
+                // If the target node is available...initialize the observer!
+                initializeObserver(targetNode);
+                // focusable start count
+                var start_focusableElements = targetNode.querySelectorAll('.focusable');
+                focusableCount = start_focusableElements.length; //0
+            } else {
+                // If the target node is not yet available, wait...try again
+                setTimeout(waitForTargetNode, 100);
+            }
+        }
+
+        // Start waiting for the target node
+        waitForTargetNode();
+    })();
+</script>
+
+
+<script>
+
+    document.addEventListener('keydown', function (event) {
+
+        const target = event.target;
+
+        if ((event.key === 'Enter') || (event.keyCode === 13)) {
+            if (target.classList.contains('enterkey2click')) {
+                target.click();
+            }
+        }
+    });
+
+</script>
+
+
+<div class="container_of_video_rows">
+    <div class="video_row" id="video_row_77879971991999-111">
+        <div class="focusable fbox enterkey2click" id="21324455">Item 1-1</div>
+        <div class="focusable fbox enterkey2click" id="13331324">Item 1-2</div>
+        <div class="focusable fbox enterkey2click" id="33331324">Item 1-3</div>
+    </div>
+
+    <div class="video_row" id="video_row_88666971991999-453">
+        <div class="focusable fbox enterkey2click" id="8233324">Item 2-1</div>
+        <div class="focusable fbox enterkey2click" id="7731324">Item 2-2</div>
+    </div>
+</div>
+
+
+<!-- Section 1 -->
+<div id="section1" class="section">
+    <div class="focusable">Item 1-2</div>
+    <div class="focusable">Item 1-2</div>
+    <div class="focusable">Item 1-2</div>
+    <div class="focusable">Item 1-2</div>
+    <div class="focusable">Item 1-2</div>
+    <div class="focusable">Item 1-2</div>
+    <div class="focusable">Item 1-2</div>
+    <div class="focusable">Item 1-2</div>
+    <div class="focusable">Item 1-2</div>
+    <div class="focusable">Item 1-2</div>
+    <div class="focusable">Item 1-2</div>
+</div>
+  
+  <!-- Section 2 -->
+  <div id="section2" class="section">
+    <div class="focusable">Item 2-1</div>
+    <div class="focusable">Item 2-2</div>
+  </div>
