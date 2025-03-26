@@ -1,256 +1,212 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vimeo Player</title>
-    <style>
-        #vimeo-player {
-            width: 100%;
-            height: 0;
-            padding-top: 56.25%; /* 16:9 aspect ratio */
-            position: relative;
-        }
-        #vimeo-player iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vimeo Player</title>
+  <style>
+    #vimeo-player {
+      width: 100%;
+      height: 0;
+      padding-top: 56.25%; /* 16:9 aspect ratio */
+      position: relative;
+    }
+    #vimeo-player iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
 </head>
 <body>
-    <div id="vimeo-player" tabindex="0">
-        <!-- Vimeo player will be loaded here -->
-    </div>
+  <div id="vimeo-player" tabindex="0">
+    <!-- Vimeo player will be loaded here -->
+  </div>
 
-    <script src="https://player.vimeo.com/api/player.js"></script>
-    <script>
-        // Get the user agent string
-        var userAgent = navigator.userAgent;
+  <script src="https://player.vimeo.com/api/player.js"></script>
+  <script>
+    // Global player variable
+    let player;
 
-        // Check if the user agent string contains "(Web0S; Linux/SmartTV)"
-        if (userAgent.includes("(Web0S; Linux/SmartTV)")) {
-            var WebOS = true;
-            console.log("This is a WebOS Smart TV");
-        } else {
-            console.log("This is not a WebOS Smart TV");
-            var WebOS = false;            
-        }
+    // Get the user agent string
+    var userAgent = navigator.userAgent;
 
-                // Create a URLSearchParams object with the current URL
-                var urlParams = new URLSearchParams(window.location.search);
+    // Check if the user agent string contains "(Web0S; Linux/SmartTV)"
+    var WebOS = userAgent.includes("(Web0S; Linux/SmartTV)");
+    console.log(WebOS ? "This is a WebOS Smart TV" : "This is not a WebOS Smart TV");
 
-                // Get the value of the 'VideoID' parameter from the query string
-                const videoId = urlParams.get('id');
+    // Create a URLSearchParams object with the current URL
+    var urlParams = new URLSearchParams(window.location.search);
+    // Get the value of the 'id' parameter from the query string
+    const videoId = urlParams.get('id');
+    // Replace with your fallback Vimeo video ID
+    const errorVideoId = '920877432';
 
-        // Replace with your Vimeo video ID
-        const errorVideoId = '920877432';
-
-        // Make a request to the Vimeo API to retrieve information about the video
-        fetch('https://api.vimeo.com/videos/' + videoId, {
-            method: 'GET',
-            headers: {
-                'Authorization': 'Bearer 233acfe488559f230a85fec4ca4d0785' // Replace with your Vimeo API access token
-            }
-        })
-        .then(response => {
-            if (response.ok) {
-                console.log('Video exists');
-
-                    // Create a new Vimeo Player object
-                    const player = new Vimeo.Player(document.getElementById('vimeo-player'), {
-                        url: 'https://vimeo.com/' + videoId,
-                        autoplay: true,
-                        autopause: false,
-                        badge: false,
-                        keyboard: true,
-                        controls: true,
-                        pip: false,
-                        loop: false
-                    });
-
-            } else {
-                console.log('Video does not exist');
-
-                    // Create a new Vimeo Player object
-                    const player = new Vimeo.Player(document.getElementById('vimeo-player'), {
-                        url: 'https://vimeo.com/' + errorVideoId,
-                        autoplay: true,
-                        autopause: false,
-                        badge: false,
-                        keyboard: true,
-                        controls: true,
-                        pip: false,
-                        loop: true
-                    });
-
-            }
-
-        })
-        .catch(error => {
-            console.error('Error checking video existence:', error);
+    // Fetch the video info from Vimeo API
+    fetch('https://api.vimeo.com/videos/' + videoId, {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer 233acfe488559f230a85fec4ca4d0785' // Replace with your Vimeo API access token
+      }
+    })
+    .then(response => {
+      if (response.ok) {
+        console.log('Video exists');
+        // Create a new Vimeo Player object and assign to global variable
+        player = new Vimeo.Player(document.getElementById('vimeo-player'), {
+          url: 'https://vimeo.com/' + videoId,
+          autoplay: true,
+          autopause: false,
+          badge: false,
+          keyboard: true,
+          controls: true,
+          pip: false,
+          loop: false
         });
+      } else {
+        console.log('Video does not exist');
+        player = new Vimeo.Player(document.getElementById('vimeo-player'), {
+          url: 'https://vimeo.com/' + errorVideoId,
+          autoplay: true,
+          autopause: false,
+          badge: false,
+          keyboard: true,
+          controls: true,
+          pip: false,
+          loop: true
+        });
+      }
+      // Once the player is created, you can attach events
+      setupPlayerEvents();
+    })
+    .catch(error => {
+      console.error('Error checking video existence:', error);
+    });
+
+    // Function to set up player events
+    function setupPlayerEvents() {
+      player.on('loaded', function() {
+        console.log('Video loaded successfully');
+
+        player.ready().then(function() {
+          player.play().then(function() {
+            console.log('Video started playing');
+          }).catch(function(error) {
+            console.log('Error playing the video:', error);
+          });
+
+          // Set focus to the player element
+          document.getElementById('vimeo-player').focus();
+        });
+      });
+
+      player.on('play', function() {
+        isPlaying = true;
+      });
+
+      player.on('pause', function() {
+        isPlaying = false;
+      });
+    }
 
     // Custom Control States for Player
     var isPlaying = false;
     var keydown_ToggleLock = false;
 
-    player.on('loaded', function() {
-        console.log('Video loaded successfully');
+    // Control functions reference the global player variable
+    function togglePlayback() {
+      if (isPlaying) {
+        pausePlayer();
+      } else {
+        playPlayer();
+      }
+    }
 
-        // Play the video when the player is ready
-        player.ready().then(function() {
-                player.play().then(function() {
-                    console.log('Video started playing');
-                }).catch(function(error) {
-                    console.log('Error playing the video:', error);
-                });
+    function pausePlayer() {
+      player.pause().then(function() {
+        console.log('Video paused');
+        isPlaying = false;
+      }).catch(function(error) {
+        console.error('Error pausing video:', error);
+      });
+    }
 
-                // Set focus to the player element
-                const playerElement = document.getElementById('vimeo-player');
-                playerElement.focus(); 
+    function playPlayer() {
+      player.play().then(function() {
+        console.log('Video playing');
+        isPlaying = true;
+      }).catch(function(error) {
+        console.error('Error playing video:', error);
+      });
+    }
 
-            });
+    function scrubForward() {
+      player.getCurrentTime().then(function(seconds) {
+        player.setCurrentTime(seconds + 5).catch(function(error) {
+          console.error('Error scrubbing forward:', error);
+        });
+      }).catch(function(error) {
+        console.error('Error getting current time:', error);
+      });
+    }
 
+    function scrubBackward() {
+      player.getCurrentTime().then(function(seconds) {
+        var newTime = seconds - 5;
+        if (newTime < 0) {
+          newTime = 0;
+        }
+        player.setCurrentTime(newTime).catch(function(error) {
+          console.error('Error scrubbing backward:', error);
+        });
+      }).catch(function(error) {
+        console.error('Error getting current time:', error);
+      });
+    }
+
+    // Add event listeners for key presses
+    document.addEventListener('keydown', function(event) {
+      // Keycodes for LGTV 
+      if (event.keyCode === 13) { // Enter OK key on RC
+        if (!keydown_ToggleLock) {
+          togglePlayback();
+          keydown_ToggleLock = true;
+        }
+      }
+      if (event.keyCode === 415) { // Play key on RC
+        playPlayer();
+      }
+      if (event.keyCode === 19) { // Pause key on RC
+        pausePlayer();
+      }
+      if (event.keyCode === 413) { // Stop key on RC
+        pausePlayer();
+      }
+      if (event.keyCode === 39 || event.keyCode === 417) { // right arrow or forward key on RC
+        scrubForward();
+      }
+      if (event.keyCode === 37 || event.keyCode === 412) { // left arrow or backward key on RC
+        scrubBackward();
+      }
     });
 
+    document.addEventListener('keyup', function(event) {
+      if (event.keyCode === 13) { // Enter OK key on RC
+        keydown_ToggleLock = false;
+      }
+    });
 
-        // Function to toggle playback state
-        function togglePlayback() {
-            if (isPlaying) {
-                pausePlayer();
-            } else {
-                playPlayer();
-            }
+    // LGTV WebOS focus management
+    if (WebOS) {
+      setInterval(function() {
+        var vimeoPlayer = document.getElementById('vimeo-player');
+        if (vimeoPlayer && document.activeElement !== vimeoPlayer) {
+          vimeoPlayer.focus();
         }
-
-        // Function to handle pause operation
-        function pausePlayer() {
-            player.pause()
-                .then(function() {
-                    console.log('Video paused');
-                    isPlaying = false;
-                })
-                .catch(function(error) {
-                    console.error('Error pausing video:', error);
-                });
-        }
-
-        // Function to handle play operation
-        function playPlayer() {
-            player.play()
-                .then(function() {
-                    console.log('Video playing');
-                    isPlaying = true;
-                })
-                .catch(function(error) {
-                    console.error('Error playing video:', error);
-                });
-        }
-
-
-     // Function to scrub video forward by 5 seconds
-     function scrubForward() {
-            player.getCurrentTime().then(function(seconds) {
-                player.setCurrentTime(seconds + 5).catch(function(error) {
-                    console.error('Error scrubbing forward:', error);
-                });
-            }).catch(function(error) {
-                console.error('Error getting current time:', error);
-            });
-        }
-
-        // Function to scrub video backward by 5 seconds
-        function scrubBackward() {
-            player.getCurrentTime().then(function(seconds) {
-                var newTime = seconds - 5;
-                if (newTime < 0) {
-                    newTime = 0;
-                }
-                player.setCurrentTime(newTime).catch(function(error) {
-                    console.error('Error scrubbing backward:', error);
-                });
-            }).catch(function(error) {
-                console.error('Error getting current time:', error);
-            });
-        }
-
-        // Update isPlaying based on video state changes
-        player.on('play', function() {
-            isPlaying = true;
-        });
-
-        player.on('pause', function() {
-            isPlaying = false;
-        });
-
-        
-        // Add event listener for key presses
-        document.addEventListener('keydown', function(event) {
-
-            // Keycodes for LGTV 
-            if (event.keyCode === 13) { // Enter OK key on RC
-                if (!keydown_ToggleLock) {
-                    togglePlayback();
-                    keydown_ToggleLock = true;
-                }
-            }
-            if (event.keyCode === 415) { // Play key on RC
-                playPlayer();
-            }
-            if (event.keyCode === 19) { // Pause key on RC
-                pausePlayer();
-            }
-            if (event.keyCode === 413) { // stop key on RC
-                pausePlayer();
-            }
-            if (event.keyCode === 39) { // right arrow key 
-                scrubForward();
-            }
-            if (event.keyCode === 417) { // forward double arrow key 
-                scrubForward();
-            }
-            if (event.keyCode === 37) { // left arrow key 
-                scrubBackward();
-            }
-            if (event.keyCode === 412) { // backward double arrow key 
-                scrubBackward();
-            }
-
-            //alert(event.keyCode);
-
-        });
-
-        document.addEventListener('keyup', function(event) {
-            if (event.keyCode === 13) { // Enter OK key on RC
-                keydown_ToggleLock = false;
-            }    
-        });
-
-        /*
-        setInterval(function() {
-            var activeElement = document.activeElement;
-            var focusElement = document.hasFocus() ? document.activeElement : "None";
-
-            console.log("Current active element: ", activeElement);
-            console.log("Element with focus: ", focusElement);
-        }, 2000); // 10000 milliseconds = 10 seconds
-        */
-
-        // LGTV WebOS 
-        if (WebOS) {
-            // Keep focus on vimeo-player id since the internal UI resets focus to the iFRAME inside it along with eventListner controls
-            setInterval(function() {
-                var vimeoPlayer = document.getElementById('vimeo-player');
-                
-                if (vimeoPlayer && document.activeElement !== vimeoPlayer) {
-                    vimeoPlayer.focus();
-                }
-            }, 1000); // 1000 milliseconds = 1 second
-        }        
-
-    </script>
+      }, 1000);
+    }
+  </script>
 </body>
 </html>
