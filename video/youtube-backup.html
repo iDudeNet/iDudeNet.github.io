@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Video Player</title>
+    <script src="https://player.vimeo.com/api/player.js"></script>
+    <style>
+        .media-controller {
+            width: 90%;
+            max-width: 1600px;
+            margin: 20px auto;
+            aspect-ratio: 16/9;
+            background: #000;
+            position: relative;
+            overflow: hidden;
+            /* NEW LINE */
+        }
+
+        #vimeoIframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            z-index: 1;
+            /* NEW LINE */
+        }
+
+        .media-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px;
+            background: rgba(0, 0, 0, 1.0);
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+            z-index: 100;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+
+        .media-controls.visible {
+            transform: translateY(0);
+        }
+
+        .media-button {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            padding: 8px;
+            font-size: 16px;
+            position: relative;
+            outline: none;
+            /* Add this */
+            transition: background-color 0.2s;
+            /* Add for visual feedback */
+        }
+
+        /* Improved focus state */
+        .media-button:focus {
+            background: rgba(255, 255, 255, 0.1);
+            /* Visible focus indicator */
+            border-radius: 4px;
+        }
+
+        .media-button:hover .tooltip,
+        .media-button:focus .tooltip {
+            opacity: 1;
+        }
+
+        /* Firefox fix */
+        .media-button::-moz-focus-inner {
+            border: 0;
+        }
+
+        .button-icon {
+            display: inline-block;
+            min-width: 1.5em;
+        }
+
+        .tooltip {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+
+        input[type="range"] {
+            flex: 1;
+            height: 4px;
+            min-width: 50px;
+        }
+
+        #timeDisplay {
+            color: white;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .volume-container {
+            position: relative;
+            display: inline-flex;
+            vertical-align: middle;
+        }
+
+        .volume-slider-container {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            height: 20px;
+            border-radius: 5px;
+            padding: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transform-origin: center;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%) rotate(-90deg);
+            margin-bottom: 45px;
+            width: auto !important;
+            min-width: 100px;
+
+        }
+
+        #volumeRange {
+            width: 100%;
+            margin: 0;
+        }
+
+        /* Add to existing CSS */
+        .volume-slider-container {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .volume-slider-container.focusable {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* Show slider on mute button hover/focus */
+        .volume-container:hover .volume-slider-container,
+        .volume-container:focus-within .volume-slider-container {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* Keep slider visible when interacting with it */
+        .volume-slider-container:hover,
+        .volume-slider-container:focus-within {
+            opacity: 1;
+            pointer-events: all;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="media-controller">
+        <iframe id="vimeoIframe" src="https://player.vimeo.com/video/1058748705?background=0" frameborder="0"
+            allow="autoplay; fullscreen; picture-in-picture" allowfullscreen title="Vimeo video player"
+            aria-label="Video content">
+        </iframe>
+
+        <div class="media-controls visible" role="toolbar" aria-label="Video controls">
+
+            <button class="media-button" id="playButton" aria-label="Play" tabindex="0">
+                <span class="button-icon">▶</span>
+                <span class="tooltip" role="tooltip">Play</span>
+            </button>
+
+            <button class="media-button" id="seekBack" aria-label="Rewind 15 seconds" tabindex="0">
+                <span class="button-icon">«</span>
+                <span class="tooltip" role="tooltip">Backward<br>15s</span>
+            </button>
+
+            <button class="media-button" id="seekForward" aria-label="Fast forward 15 seconds" tabindex="0">
+                <span class="button-icon">»</span>
+                <span class="tooltip" role="tooltip">Forward<br>15s</span>
+            </button>
+
+            <!-- In your HTML, update the timeRange input -->
+            <input type="range" id="timeRange" min="0" max="100" step="1" value="0" aria-label="Progress bar"
+                aria-valuetext="0:00">
+
+            <span id="timeDisplay" aria-live="off">0:00 / 0:00</span>
+
+            <div class="volume-container" tabindex="0">
+                <button class="media-button" id="muteButton" aria-label="Mute">
+                    <span class="button-icon">🔊</span>
+                    <span class="tooltip" role="tooltip">Mute</span>
+                </button>
+                <div class="volume-slider-container">
+                    <input type="range" id="volumeRange" min="0" max="1" step="0.1" aria-label="Volume slider"
+                        aria-valuetext="100%">
+                </div>
+            </div>
+
+            <button class="media-button" id="ccButton" aria-label="Toggle captions" aria-pressed="false" tabindex="0">
+                <span class="button-icon">CC</span>
+                <span class="tooltip" role="tooltip">CC/Subtitles</span>
+            </button>
+
+            <button class="media-button" id="speedButton" aria-label="Playback speed" tabindex="0">
+                <span class="button-icon">1x</span>
+                <span class="tooltip" role="tooltip">Speed</span>
+            </button>
+
+            <button class="media-button" id="fullscreenButton" aria-label="Enter full screen" tabindex="0">
+                <span class="button-icon">⛶</span>
+                <span class="tooltip" role="tooltip">Enter Full screen</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const player = new Vimeo.Player(document.getElementById('vimeoIframe'));
+            const mediaController = document.querySelector('.media-controller');
+            let duration = 0;
+            let isMuted = false;
+            let previousVolume = 1;
+            const speedOptions = [0.5, 1, 1.5, 2];
+            let speedIndex = 1;
+            let controlsVisible = true;
+
+            const controls = {
+                play: document.getElementById('playButton'),
+                cc: document.getElementById('ccButton'),
+                seekBack: document.getElementById('seekBack'),
+                seekForward: document.getElementById('seekForward'),
+                mute: document.getElementById('muteButton'),
+                volume: document.getElementById('volumeRange'),
+                time: document.getElementById('timeRange'),
+                display: document.getElementById('timeDisplay'),
+                speed: document.getElementById('speedButton'),
+                fullscreen: document.getElementById('fullscreenButton')
+            };
+
+            // UPDATED PLAY BUTTON HANDLER
+            controls.play.addEventListener('click', async () => {
+                try {
+                    const paused = await player.getPaused();
+
+                    if (paused) {
+                        // 1. START PLAYBACK FIRST
+                        await player.play();
+
+                        // 2. UPDATE UI STATE IMMEDIATELY
+                        controls.play.querySelector('.button-icon').textContent = '⏸';
+                        controls.play.setAttribute('aria-label', 'Pause');
+                        controls.play.querySelector('.tooltip').textContent = 'Pause';
+
+                        // 3. HIDE CONTROLS AFTER VISUAL FEEDBACK
+                        requestAnimationFrame(() => {
+                            toggleControlsVisibility(false);
+                        });
+                    } else {
+                        // PAUSE FLOW REMAINS THE SAME
+                        await player.pause();
+                        toggleControlsVisibility(true);
+                        controls.play.focus();
+                    }
+                } catch (error) {
+                    console.error('Play button error:', error);
+                }
+            });
+
+            // FIXED SEEK CONTROLS (REPLACE EXISTING)
+            controls.seekBack.addEventListener('click', async () => {
+                try {
+                    const currentTime = await player.getCurrentTime();
+                    await player.setCurrentTime(currentTime - 15); // Negative values auto-clamp to 0
+                } catch (error) {
+                    console.error('Seek back error:', error);
+                }
+            });
+
+            controls.seekForward.addEventListener('click', async () => {
+                try {
+                    const currentTime = await player.getCurrentTime();
+                    const newTime = currentTime + 15;
+                    await player.setCurrentTime(newTime); // Vimeo handles overshooting duration
+                } catch (error) {
+                    console.error('Seek forward error:', error);
+                }
+            });
+            document.addEventListener('keydown', async (event) => {
+                // BLOCK 1: ENTER KEY
+                if (event.key === 'Enter') {
+                    if (event.target.closest('.media-controls, .media-button, input[type="range"]')) return;
+
+                    event.preventDefault();
+                    try {
+                        const paused = await player.getPaused();
+                        const icon = controls.play.querySelector('.button-icon');
+                        const tooltip = controls.play.querySelector('.tooltip');
+
+                        if (paused) {
+                            await player.play();
+                            toggleControlsVisibility(false); // Force hide
+                        } else {
+                            await player.pause();
+                            toggleControlsVisibility(true); // Force show
+                        }
+
+                        // Update play button UI
+                        icon.textContent = paused ? '⏸' : '▶';
+                        const action = paused ? 'Pause' : 'Play';
+                        controls.play.setAttribute('aria-label', action);
+                        tooltip.textContent = action;
+
+                    } catch (error) {
+                        console.error('Enter key error:', error);
+                    }
+                }
+
+                // BLOCK 2: ARROW KEYS
+                if (['ArrowUp', 'ArrowDown'].includes(event.key)) {
+                    event.preventDefault();
+                    try {
+                        const paused = await player.getPaused();
+                        if (!paused) toggleControlsVisibility(); // Toggle if playing
+                    } catch (error) {
+                        console.error('Arrow key error:', error);
+                    }
+                }
+            });
+
+            // ENHANCED TOGGLE FUNCTION
+            function toggleControlsVisibility(visible = null) {
+                const mediaControls = document.querySelector('.media-controls');
+
+                // Force state if specified
+                if (typeof visible === 'boolean') {
+                    controlsVisible = visible;
+                } else {
+                    controlsVisible = !controlsVisible;
+                }
+
+                // DOM manipulation
+                mediaControls.classList.toggle('visible', controlsVisible);
+                void mediaControls.offsetHeight; // Force layout recalculation
+
+                // Focus management
+                if (!controlsVisible) {
+                    document.activeElement?.blur();
+                }
+            }
+
+
+            // Volume & Mute
+            controls.volume.addEventListener('input', async (e) => {
+                try {
+                    const newVolume = Number(e.target.value);
+                    await player.setVolume(newVolume);
+                    controls.volume.setAttribute('aria-valuetext', `${Math.round(newVolume * 100)}%`);
+                    if (!isMuted) previousVolume = newVolume;
+                    const muteIcon = controls.mute.querySelector('.button-icon');
+                    const muteTooltip = controls.mute.querySelector('.tooltip');
+                    muteIcon.textContent = newVolume > 0 ? '🔊' : '🔇';
+                    muteTooltip.textContent = newVolume > 0 ? 'Mute' : 'Unmute';
+                } catch (error) {
+                    console.error('Volume error:', error);
+                }
+            });
+
+            const volumeContainer = document.querySelector('.volume-container');
+            const sliderContainer = document.querySelector('.volume-slider-container');
+
+            // Show/hide based on hover/focus
+            volumeContainer.addEventListener('mouseenter', () => sliderContainer.classList.add('focusable'));
+            volumeContainer.addEventListener('mouseleave', () => sliderContainer.classList.remove('focusable'));
+
+            // Focus management
+            volumeContainer.addEventListener('focusin', () => sliderContainer.classList.add('focusable'));
+            volumeContainer.addEventListener('focusout', (e) => {
+                if (!volumeContainer.contains(e.relatedTarget)) {
+                    sliderContainer.classList.remove('focusable');
+                }
+            });
+
+            // Make slider container focusable
+            sliderContainer.tabIndex = 0;
+
+            // Revised mute handler to ensure proper state
+            controls.mute.addEventListener('click', async () => {
+                try {
+                    const icon = controls.mute.querySelector('.button-icon');
+                    const tooltip = controls.mute.querySelector('.tooltip');
+
+                    if (isMuted) {
+                        // Restore to previous volume (100% initially)
+                        await player.setVolume(previousVolume);
+                        controls.volume.value = previousVolume;
+                        controls.volume.setAttribute('aria-valuetext', `${Math.round(previousVolume * 100)}%`);
+                        isMuted = false;
+                        icon.textContent = '🔊';
+                        tooltip.textContent = 'Mute';
+                    } else {
+                        // Store current volume before muting
+                        const currentVolume = await player.getVolume();
+                        previousVolume = currentVolume;
+                        await player.setVolume(0);
+                        controls.volume.value = 0;
+                        controls.volume.setAttribute('aria-valuetext', '0%');
+                        isMuted = true;
+                        icon.textContent = '🔇';
+                        tooltip.textContent = 'Unmute';
+                    }
+                    controls.mute.setAttribute('aria-label', isMuted ? 'Unmute' : 'Mute');
+                } catch (error) {
+                    console.error('Mute error:', error);
+                }
+            });
+
+            // Time & Progress
+            // Update the timeupdate handler to guard against NaN
+            player.on('timeupdate', ({ seconds, duration: totalDuration }) => {
+                if (totalDuration <= 0) return; // Prevent division by zero
+
+                duration = totalDuration;
+                const progress = (seconds / duration) * 100;
+
+                // Only update if valid number
+                if (!isNaN(progress)) {
+                    controls.time.value = progress;
+                    controls.display.textContent = `${formatTime(seconds)} / ${formatTime(duration)}`;
+                    controls.time.setAttribute('aria-valuetext', `${formatTime(seconds)}`);
+                }
+            });
+
+            controls.time.addEventListener('input', async (e) => {
+                try {
+                    const time = (e.target.value / 100) * duration;
+                    await player.setCurrentTime(time);
+                } catch (error) {
+                    console.error('Seek error:', error);
+                }
+            });
+
+            // Speed Control
+            controls.speed.addEventListener('click', async () => {
+                try {
+                    speedIndex = (speedIndex + 1) % speedOptions.length;
+                    const speed = speedOptions[speedIndex];
+                    const icon = controls.speed.querySelector('.button-icon');
+                    const tooltip = controls.speed.querySelector('.tooltip');
+
+                    await player.setPlaybackRate(speed);
+                    icon.textContent = `${speed}x`;
+                    tooltip.textContent = `Speed: ${speed}x`;
+                    controls.speed.setAttribute('aria-label', `Speed: ${speed}x`);
+                } catch (error) {
+                    console.error('Speed error:', error);
+                }
+            });
+
+            // Fullscreen
+            controls.fullscreen.addEventListener('click', () => {
+                const icon = controls.fullscreen.querySelector('.button-icon');
+                const tooltip = controls.fullscreen.querySelector('.tooltip');
+                const isFullscreen = !!document.fullscreenElement;
+
+                if (isFullscreen) {
+                    document.exitFullscreen();
+                    tooltip.textContent = 'Enter full screen';
+                    controls.fullscreen.setAttribute('aria-label', 'Enter fullscreen');
+                } else {
+                    mediaController.requestFullscreen();
+                    tooltip.textContent = 'Exit full screen';
+                    controls.fullscreen.setAttribute('aria-label', 'Exit fullscreen');
+                }
+            });
+
+            // Captions
+            controls.cc.addEventListener('click', async () => {
+                try {
+                    const tracks = await player.getTextTracks();
+                    const englishTrack = tracks.find(t => t.language === 'en');
+                    const tooltip = controls.cc.querySelector('.tooltip');
+
+                    if (englishTrack) {
+                        const isEnabled = controls.cc.classList.toggle('active');
+                        controls.cc.setAttribute('aria-pressed', isEnabled.toString());
+
+                        if (isEnabled) {
+                            await player.enableTextTrack(englishTrack);
+                            tooltip.textContent = 'Disable captions';
+                        } else {
+                            await player.disableTextTrack();
+                            tooltip.textContent = 'Enable captions';
+                        }
+                    }
+                } catch (error) {
+                    console.error('CC error:', error);
+                }
+            });
+
+            // Helper Function
+            function formatTime(seconds) {
+                const minutes = Math.floor(seconds / 60);
+                const remaining = Math.floor(seconds % 60);
+                return `${minutes}:${remaining.toString().padStart(2, '0')}`;
+            }
+
+
+            // CORRECTED INITIALIZATION
+            player.ready().then(() => {
+                // 1. Set initial volume first
+                return player.setVolume(1);
+            }).then(() => {
+                // 2. Get video duration
+                return player.getDuration();
+            }).then(d => {
+                // 3. Initialize duration-related elements
+                duration = d;
+                controls.time.value = 0;
+                controls.display.textContent = `0:00 / ${formatTime(d)}`;
+                controls.time.setAttribute('aria-valuetext', '0:00');
+
+                // 4. Focus play button
+                controls.play.focus();
+
+                // 5. Initialize captions
+                return player.getTextTracks();
+            }).then(tracks => {
+                const hasCC = tracks.some(t => t.mode === 'showing');
+                controls.cc.classList.toggle('active', hasCC);
+                controls.cc.setAttribute('aria-pressed', hasCC.toString());
+            }).catch(error => {
+                console.error('Initialization error:', error);
+            });
+
+            // KEEP EVERYTHING ELSE THE SAME
+
+
+
+        })();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Video Player</title>
+    <script src="https://player.vimeo.com/api/player.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        /* ========== BASE STYLES ========== */
+        /* ========== BASE STYLES ========== */
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .media-controller {
+            width: 100vw;
+            height: calc(100vw * 9 / 16);
+            max-height: 100vh;
+            background: #000;
+            position: relative;
+            margin: 0 auto;
+            overflow: hidden;
+        }
+
+        #vimeoIframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            transform: scale(1.001);
+        }
+
+        /* ========== MEDIA CONTROLS ========== */
+        .media-controls {
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            gap: 12px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 12px;
+            background: rgba(0, 0, 0, 1.0);
+            z-index: 100;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            max-width: 100vw;
+            box-sizing: border-box;
+        }
+
+        .media-controls.visible {
+            transform: translateY(0);
+        }
+
+        /* Controls Row Container */
+        .controls-row {
+            display: flex;
+            width: 100%;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Left Group (Only Exit button) */
+        .button-group-left {
+            position: absolute;
+            left: 20px;
+            bottom: 20px;
+        }
+
+        /* Center Group (All main controls) */
+        .button-group-center {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* Right Group (Empty - for future use) */
+        .button-group-right {
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
+            /* Empty for now */
+        }
+
+        /* ========== BUTTON STYLES ========== */
+        .media-button {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 32px;
+            padding: 16px;
+            position: relative;
+            outline: none;
+            transition: background-color 0.2s;
+            border: solid 2px transparent;
+        }
+
+        /* Exit Button Specifics */
+        #exitButton {
+            background: #418600;
+            border-radius: 6%;
+            width: 120px;
+            height: 60px;
+            border: 2px solid rgb(6, 105, 11);
+            font-size: 32px;
+            padding-left: 8px;
+        }
+
+        #exitButton:hover {
+            background: #cf0652;
+        }
+
+        /* ========== TIME CONTROLS ========== */
+        .slider-time-group {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+        }
+
+        #timeRange {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(to right, #60C304, 50%, gray 50%);
+            border-radius: 4px;
+            outline: none;
+            border: none;
+            --thumb-color: #60C304;
+        }
+
+        #timeRange::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--thumb-color) !important;
+            border-radius: 50%;
+            cursor: pointer;
+            margin-top: -6px;
+        }
+
+        #timeDisplay {
+            font-size: 28px;
+            color: white;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        /* ========== TOOLTIPS ========== */
+        .tooltip {
+            position: absolute;
+            bottom: calc(100% + 30px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            font-size: 20px;
+            padding: 6px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 10;
+        }
+
+        .media-button:hover .tooltip,
+        .media-button:focus .tooltip {
+            opacity: 1;
+        }
+
+        /* ========== CC BUTTON ========== */
+        .cc-button {
+            background: none;
+            border: none;
+            padding: 6px 8px;
+            cursor: pointer;
+        }
+
+        .cc-text {
+            color: white;
+            font: bold 26px Arial;
+            border: 1px solid white;
+            padding: 3px 8px;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .cc-button[aria-pressed="true"] .cc-text {
+            background: white;
+            color: black;
+            border-color: transparent;
+        }
+
+        /* ========== UTILITY CLASSES ========== */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="media-controller">
+        <iframe id="vimeoIframe" src="https://player.vimeo.com/video/1058748705?background=0" frameborder="0"
+            allow="autoplay; fullscreen; picture-in-picture" allowfullscreen title="Vimeo video player"
+            aria-label="Video content">
+        </iframe>
+
+        <div class="media-controls visible" role="toolbar" aria-label="Video controls">
+            <!-- Slider and Time Display -->
+            <div class="slider-time-group">
+                <input type="range" id="timeRange" class="focusable" min="0" max="100" step="1" value="0"
+                    aria-label="Progress bar" aria-valuetext="0:00">
+                <div id="timeDisplay" aria-live="off">0:00 / 0:00</div>
+            </div>
+
+            <!-- Button Groups -->
+            <div class="controls-row">
+                <!-- Left Group (Only Exit button) -->
+                <div class="button-group-left">
+                    <button id="exitButton" class="media-button focusable" aria-label="Exit" tabindex="0">
+                        <span class="button-icon">Exit</span>
+                        <span class="tooltip" role="tooltip">Exit</span>
+                    </button>
+                </div>
+
+                <!-- Center Group (All main controls) -->
+                <div class="button-group-center">
+                    <button class="media-button focusable" id="playButton" aria-label="Play" tabindex="0">
+                        <span class="button-icon">▶</span>
+                        <span class="tooltip" role="tooltip">Play</span>
+                    </button>
+                    <button class="media-button focusable" id="seekBack" aria-label="Rewind 15 seconds" tabindex="0">
+                        <span class="button-icon">«</span>
+                        <span class="tooltip" role="tooltip">Backward<br>15s</span>
+                    </button>
+                    <button class="media-button focusable" id="seekForward" aria-label="Fast forward 15 seconds"
+                        tabindex="0">
+                        <span class="button-icon">»</span>
+                        <span class="tooltip" role="tooltip">Forward<br>15s</span>
+                    </button>
+                    <div class="volume-container">
+                        <button class="media-button focusable" id="muteButton" aria-label="Mute">
+                            <span class="button-icon">🔊</span>
+                            <span class="tooltip" role="tooltip">Mute</span>
+                        </button>
+                    </div>
+                    <button class="cc-button focusable" id="ccButton" aria-pressed="false" tabindex="0">
+                        <span class="cc-text">CC</span>
+                        <span class="tooltip">Subtitles</span>
+                    </button>
+                    <button class="media-button hidden" id="fullscreenButton" aria-label="Enter full screen"
+                        tabindex="0">
+                        <span class="button-icon">⛶</span>
+                        <span class="tooltip" role="tooltip">Enter Full screen</span>
+                    </button>
+                </div>
+
+                <!-- Right Group (Empty - for future use) -->
+                <div class="button-group-right">
+                    <!-- Empty for future controls -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function () {
+
+            // 1. Define TV check (you'll implement detection logic)
+            const isSmartTV = true;/* Your detection logic here */;
+
+
+            // Slider TimeRange Code for Colorful Slider update
+            const slider = document.getElementById("timeRange");
+            let lastValue = slider.value; // Store last known value
+
+            function updateTrackColor() {
+                const percentage = (slider.value / slider.max) * 100;
+                const isFocused = (slider === document.activeElement);
+
+                slider.style.setProperty('--thumb-color', isFocused ? '#cf0652' : '#60C304');
+                slider.style.background = `linear-gradient(to right, ${isFocused ? '#cf0652' : '#60C304'} ${percentage}%,  #505050 ${percentage}%)`;
+            }
+            // ADD EVENT LISTENERS
+            slider.addEventListener('input', updateTrackColor);
+            slider.addEventListener('focus', updateTrackColor);
+            slider.addEventListener('blur', updateTrackColor);
+
+            // Ensure correct color on page load
+            updateTrackColor();
+
+
+
+            const player = new Vimeo.Player(document.getElementById('vimeoIframe'));
+            const mediaController = document.querySelector('.media-controller');
+            let duration = 0;
+            let isMuted = false;
+            let controlsVisible = true;
+            let lastVolume = 1;
+            let hideControlsDelay = 3000;
+
+            // Add at the top with other variables
+            let playHideTimeout = null;
+
+            const controls = {
+                playButton: document.getElementById('playButton'),
+                cc: document.getElementById('ccButton'),
+                seekBack: document.getElementById('seekBack'),
+                seekForward: document.getElementById('seekForward'),
+                mute: document.getElementById('muteButton'),
+                time: document.getElementById('timeRange'),
+                timeDisplay: document.getElementById('timeDisplay'),
+                fullscreen: document.getElementById('fullscreenButton'),
+                exitButton: document.getElementById('exitButton')
+            };
+
+            // Add exit functionality
+            controls.exitButton.addEventListener('click', () => {
+                console.log("HOOK ME UP TO BACK BUTTON STUFF WITH TV CONTROLS IM THE EXIT BUTTON!");
+            });
+
+            // Replace any instance of 4000 with hideControlsDelay
+            // For example, in the play button handler:
+            controls.playButton.addEventListener('click', async () => {
+                try {
+                    const paused = await player.getPaused();
+                    if (paused) {
+                        await player.play();
+                        // Use hideControlsDelay instead of 4000
+                        toggleControlsVisibility(true);
+                        playHideTimeout = setTimeout(() => {
+                            toggleControlsVisibility(false);
+                        }, hideControlsDelay);
+                    } else {
+                        await player.pause();
+                        toggleControlsVisibility(true);
+                    }
+                    // Update UI state
+                    const icon = controls.playButton.querySelector('.button-icon');
+                    const tooltip = controls.playButton.querySelector('.tooltip');
+                    icon.textContent = paused ? '⏸' : '▶';
+                    const action = paused ? 'Pause' : 'Play';
+                    controls.playButton.setAttribute('aria-label', action);
+                    tooltip.textContent = action;
+                } catch (error) {
+                    console.error('Play button error:', error);
+                }
+            });
+
+
+            // FIXED SEEK CONTROLS (REPLACE EXISTING)
+            controls.seekBack.addEventListener('click', async () => {
+                try {
+                    const currentTime = await player.getCurrentTime();
+                    await player.setCurrentTime(currentTime - 15); // Negative values auto-clamp to 0
+                } catch (error) {
+                    console.error('Seek back error:', error);
+                }
+            });
+
+            controls.seekForward.addEventListener('click', async () => {
+                try {
+                    const currentTime = await player.getCurrentTime();
+                    const newTime = currentTime + 15;
+                    await player.setCurrentTime(newTime); // Vimeo handles overshooting duration
+                } catch (error) {
+                    console.error('Seek forward error:', error);
+                }
+            });
+
+            document.addEventListener('keydown', async (event) => {
+                // BLOCK 1: ENTER KEY
+                if (event.key === 'Enter') {
+                    // KEEP THIS SAFETY CHECK
+                    if (event.target.closest('.media-controls, .media-button, input[type="range"]')) return;
+
+                    event.preventDefault();
+                    try {
+                        const paused = await player.getPaused();
+                        const icon = controls.playButton.querySelector('.button-icon');
+                        const tooltip = controls.playButton.querySelector('.tooltip');
+
+                        if (paused) {
+                            // MODIFIED PLAY FLOW
+                            await player.play();
+                            toggleControlsVisibility(true); // Force show first
+                            playHideTimeout = setTimeout(() => {
+                                toggleControlsVisibility(false);
+                            }, hideControlsDelay); // Then hide after 4s
+                        } else {
+                            // KEEP EXISTING PAUSE FLOW
+                            await player.pause();
+                            toggleControlsVisibility(true);
+                        }
+
+                        // KEEP UI UPDATES
+                        icon.textContent = paused ? '⏸' : '▶';
+                        const action = paused ? 'Pause' : 'Play';
+                        controls.playButton.setAttribute('aria-label', action);
+                        tooltip.textContent = action;
+
+                    } catch (error) {
+                        console.error('Enter key error:', error);
+                    }
+                }
+
+            });
+
+
+            document.addEventListener('keydown', async (event) => {
+                if (['ArrowUp', 'ArrowDown'].includes(event.key)) {
+                    //event.preventDefault();
+                    try {
+                        const paused = await player.getPaused();
+                        const isPlaying = !paused;
+
+                        if (isPlaying && !controlsVisible) {
+                            // Force the controls to be visible
+                            toggleControlsVisibility(true);
+                            // Explicitly set focus on the PlayButton
+                            controls.playButton.focus();
+                            // Optionally clear any auto-hide timer
+                            if (playHideTimeout) {
+                                clearTimeout(playHideTimeout);
+                                playHideTimeout = null;
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Arrow key error:', error);
+                    }
+                }
+            });
+
+            document.addEventListener('keydown', async (event) => {
+                const isHorizontalArrow =
+                    (event.key === 'ArrowLeft' || event.keyCode === 37) || // Left: 37
+                    (event.key === 'ArrowRight' || event.keyCode === 39);   // Right: 39
+
+                if (isHorizontalArrow) {
+                    try {
+                        const paused = await player.getPaused();
+                        const isPlaying = !paused;
+                        const isSliderFocused = document.activeElement === controls.time;
+                        //controlsVisible
+
+                        if (!paused && !isSliderFocused) {
+                            event.preventDefault();
+
+                            // Pause the video
+                            await player.pause();
+
+                            // Update play button UI
+                            controls.playButton.querySelector('.button-icon').textContent = '▶';
+                            controls.playButton.setAttribute('aria-label', 'Play');
+                            controls.playButton.querySelector('.tooltip').textContent = 'Play';
+
+                            // Show controls and focus slider
+                            toggleControlsVisibility(true);
+                            controls.time.focus();
+
+                            // Keep controls visible
+                            if (playHideTimeout) clearTimeout(playHideTimeout);
+                        }
+                    } catch (error) {
+                        console.error('Arrow key handling error:', error);
+                    }
+                }
+
+            });
+
+            // Add/modify a keydown event listener for the slider so that pressing Enter, ArrowUp, or ArrowDown resumes playback.
+            // (We use the slider’s keydown event rather than document-wide so that this behavior is only triggered when the slider is focused.)
+            controls.time.addEventListener('keydown', async (e) => {
+                // Check for Enter, ArrowUp, or ArrowDown
+                if (['Enter', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                    e.preventDefault();
+                    try {
+                        const paused = await player.getPaused();
+                        // Only resume if video is paused (due to slider interaction)
+                        if (paused) {
+                            await player.play();
+                            // Update UI state: change play button to "Pause"
+                            const icon = controls.playButton.querySelector('.button-icon');
+                            const tooltip = controls.playButton.querySelector('.tooltip');
+                            icon.textContent = '⏸';
+                            controls.playButton.setAttribute('aria-label', 'Pause');
+                            tooltip.textContent = 'Pause';
+
+                            // Optionally, you can remove focus from the slider
+                            controls.time.blur();
+
+                            // Show controls immediately, then hide them after hideControlsDelay
+                            toggleControlsVisibility(true);
+                            playHideTimeout = setTimeout(() => {
+                                toggleControlsVisibility(false);
+                            }, hideControlsDelay);
+                        }
+                    } catch (error) {
+                        console.error('Resume playback error:', error);
+                    }
+                }
+            });
+
+            // ENHANCED TOGGLE FUNCTION
+            function toggleControlsVisibility(visible = null) {
+                const mediaControls = document.querySelector('.media-controls');
+
+                // Force state if specified
+
+                if (typeof visible === 'boolean') {
+                    controlsVisible = visible;
+                } else {
+                    controlsVisible = !controlsVisible;
+                }
+
+                // DOM manipulation
+                mediaControls.classList.toggle('visible', controlsVisible);
+                void mediaControls.offsetHeight; // Force layout recalculation
+
+                // Focus management
+                if (!controlsVisible) {
+                    document.activeElement?.blur();
+                }
+
+                // Cancel auto-hide when manually toggling
+                if (playHideTimeout) {
+                    clearTimeout(playHideTimeout);
+                    playHideTimeout = null;
+                }
+
+            }
+
+            // ADD PAUSE LISTENER TO CANCEL TIMER
+            player.on('pause', () => {
+                if (playHideTimeout) {
+                    clearTimeout(playHideTimeout);
+                    playHideTimeout = null;
+                }
+            });
+
+            // ADD TO RESET TIMER ON INTERACTION
+            // Update the mousemove auto-hide delay to use hideControlsDelay
+            document.querySelector('.media-controls').addEventListener('mousemove', () => {
+                if (playHideTimeout) {
+                    clearTimeout(playHideTimeout);
+                    playHideTimeout = setTimeout(() => {
+                        toggleControlsVisibility(false);
+                    }, hideControlsDelay);
+                }
+            });
+            // Revised mute handler (replace existing)
+            controls.mute.addEventListener('click', async () => {
+                try {
+                    const currentVolume = await player.getVolume();
+                    const wasMuted = currentVolume === 0;
+
+                    const newVolume = wasMuted ? lastVolume : 0;
+                    if (!wasMuted && currentVolume > 0) {
+                        lastVolume = currentVolume;
+                    }
+
+                    await player.setVolume(newVolume);
+
+                    const icon = controls.mute.querySelector('.button-icon');
+                    const tooltip = controls.mute.querySelector('.tooltip');
+                    const isNowMuted = newVolume === 0;
+
+                    icon.textContent = isNowMuted ? '🔇' : '🔊';
+                    tooltip.textContent = isNowMuted ? 'Unmute' : 'Mute';
+                    controls.mute.setAttribute('aria-label', isNowMuted ? 'Unmute' : 'Mute');
+                } catch (error) {
+                    console.error('Mute error:', error);
+                }
+            });
+
+            // Time & Progress
+            // Update the timeupdate handler to guard against NaN
+            player.on('timeupdate', ({ seconds, duration: totalDuration }) => {
+                if (totalDuration <= 0) return; // Prevent division by zero
+
+                duration = totalDuration;
+                const progress = (seconds / duration) * 100;
+
+                // Only update if valid number
+                if (!isNaN(progress)) {
+                    controls.time.value = progress;
+                    controls.timeDisplay.textContent = `${formatTime(seconds)} / ${formatTime(duration)}`;
+                    controls.time.setAttribute('aria-valuetext', `${formatTime(seconds)}`);
+                    // Update the slider's track color
+                    updateTrackColor();
+                }
+            });
+
+            controls.time.addEventListener('input', async (e) => {
+                try {
+                    const time = (e.target.value / 100) * duration;
+                    await player.setCurrentTime(time);
+
+                    updateTrackColor(); // <-- This is where `updateTrackColor()` is called again!
+                } catch (error) {
+                    console.error('Seek error:', error);
+                }
+            });
+
+            // Fullscreen
+            controls.fullscreen.addEventListener('click', () => {
+                const icon = controls.fullscreen.querySelector('.button-icon');
+                const tooltip = controls.fullscreen.querySelector('.tooltip');
+                const isFullscreen = !!document.fullscreenElement;
+
+                if (isFullscreen) {
+                    document.exitFullscreen();
+                    tooltip.textContent = 'Enter full screen';
+                    controls.fullscreen.setAttribute('aria-label', 'Enter fullscreen');
+                } else {
+                    mediaController.requestFullscreen();
+                    tooltip.textContent = 'Exit full screen';
+                    controls.fullscreen.setAttribute('aria-label', 'Exit fullscreen');
+                }
+            });
+
+            // Updated CC handler targeting en-x-autogen
+            controls.cc.addEventListener('click', async () => {
+                try {
+                    const tracks = await player.getTextTracks();
+                    const autoGenTrack = tracks.find(t => t.language === 'en-x-autogen');
+                    const isActive = autoGenTrack?.mode === 'showing';
+                    const tooltip = controls.cc.querySelector('.tooltip');
+
+                    if (isActive) {
+                        await player.disableTextTrack();
+                        controls.cc.classList.remove('active');
+                        tooltip.textContent = 'Enable captions';
+                        controls.cc.setAttribute('aria-pressed', 'false');
+                    } else if (autoGenTrack) {
+                        await player.enableTextTrack(autoGenTrack.language, autoGenTrack.kind);
+                        controls.cc.classList.add('active');
+                        tooltip.textContent = 'Disable captions';
+                        controls.cc.setAttribute('aria-pressed', 'true');
+                    } else {
+                        console.warn('Auto-generated captions not available');
+                        controls.cc.disabled = true; // Disable button if no track exists
+                    }
+                } catch (error) {
+                    console.error('CC error:', error);
+                }
+            });
+            // Updated time formatting function (replace existing)
+            function formatTime(seconds) {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const remaining = Math.floor(seconds % 60);
+
+                return hours > 0
+                    ? `${hours}:${minutes.toString().padStart(2, '0')}:${remaining.toString().padStart(2, '0')}`
+                    : `${minutes}:${remaining.toString().padStart(2, '0')}`;
+            }
+
+            // CORRECTED INITIALIZATION (simplified)
+            // REPLACE THE ENTIRE player.ready() CHAIN WITH:
+            player.ready().then(async () => {
+                await player.setVolume(1);
+                const d = await player.getDuration();
+                duration = d;
+                controls.time.value = 0;
+                controls.timeDisplay.textContent = `0:00 / ${formatTime(d)}`; // FIXED
+                controls.time.setAttribute('aria-valuetext', '0:00');
+                controls.playButton.focus();
+                const tracks = await player.getTextTracks();
+                const hasAutoCC = tracks.some(t =>
+                    t.language === 'en-x-autogen' && t.mode === 'showing'
+                );
+                controls.cc.classList.toggle('active', hasAutoCC);
+                controls.cc.setAttribute('aria-pressed', hasAutoCC.toString());
+            }).catch(error => {
+                console.error('Initialization error:', error);
+            });
+
+
+            // 2. Conditionally show/hide fullscreen button
+            const fsButton = document.getElementById('fullscreenButton');
+            if (!isSmartTV) {
+                fsButton.classList.remove('hidden');
+                fsButton.classList.add('focusable');
+            } else {
+                fsButton.removeAttribute('focusable');
+            }
+
+
+        })();
+    </script>
+</body>
+
+</html>

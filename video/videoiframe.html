@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Vimeo Player with Scrubber, Overlays, & Enter Toggle</title>
+    <script src="https://player.vimeo.com/api/player.js"></script>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            font-family: sans-serif;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        /* Container for the entire player area */
+        #vimeo-container {
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Vimeo player container: full viewport width with 16:9 aspect ratio */
+        #vimeo-player-container {
+            width: 100vw;
+            height: calc(100vw * 9 / 16);
+            position: relative;
+            background-color: #000;
+        }
+
+        /* Iframe fills the container */
+        #vimeo-player {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        /* Common overlay container style */
+        .overlay-container {
+            position: absolute;
+            width: 100%;
+            background: rgba(0, 0, 0, 1);
+            padding: 10px;
+            transition: opacity 0.3s;
+            display: flex;
+            align-items: center;
+            pointer-events: auto;
+            left: 0;
+        }
+
+        .overlay-container.pointer-events {
+            pointer-events: none;
+        }
+
+        /* Hide overlays when video is playing */
+        .overlay-container.hidden {
+            opacity: 0;
+        }
+
+        /* Top overlay: positioned at the top with a Back button */
+        #top-button-container {
+            top: 0;
+            justify-content: flex-start;
+            pointer-events: auto;
+        }
+
+        #top-button-container button {
+            margin: 0 10px;
+            padding: 12px 24px;
+            font-size: 18px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
+        #top-button-container button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Bottom overlay: positioned at the bottom; contains a scrubber, control buttons, and time display */
+        #button-container {
+            bottom: 0;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: auto;
+        }
+
+        /* Scrubber style (range input) */
+        #scrubber {
+            width: 90%;
+            margin-bottom: 10px;
+            -webkit-appearance: none;
+            background: #444;
+            height: 8px;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        #scrubber::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #007BFF;
+            cursor: pointer;
+            border: none;
+        }
+
+        #scrubber::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #007BFF;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Button group for control buttons */
+        .button-group {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        button:focus {
+            outline: 2px solid rgb(255, 255, 255);
+            /* You can customize this to your preference */
+        }
+
+        .button-group button {
+            margin: 5px;
+            padding: 12px 24px;
+            font-size: 18px;
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .button-group button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Time display below the button group */
+        .time-display {
+            margin-top: 10px;
+            font-size: 16px;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="vimeo-container">
+        <div id="vimeo-player-container">
+            <iframe id="vimeo-player" src="https://player.vimeo.com/video/76979871?api=1&player_id=vimeo-player"
+                allow="autoplay; fullscreen" allowfullscreen></iframe>
+
+            <!-- Top overlay container with a Back button -->
+            <div id="top-button-container" class="overlay-container">
+                <button id="back-btn">Back</button>
+            </div>
+
+            <!-- Bottom overlay control container -->
+            <div id="button-container" class="overlay-container">
+                <!-- Scrubber (progress bar) -->
+                <input type="range" id="scrubber" min="0" max="100" step=".1" value="0">
+
+                <!-- Buttons arranged in a horizontal row -->
+                <div class="button-group">
+                    <button id="play-btn">Pause</button>
+                    <button id="cc-toggle-btn">CC</button>
+                </div>
+                <!-- Time display below the buttons -->
+                <div class="time-display">
+                    <span id="current-time">00:00</span> / <span id="total-duration">00:00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+(function () {        
+        // Get element references
+        var iframe = document.getElementById('vimeo-player');
+        var topOverlay = document.getElementById('top-button-container');
+        var bottomOverlay = document.getElementById('button-container');
+        var scrubber = document.getElementById('scrubber');
+        var currentTimeDisplay = document.getElementById('current-time');
+        var totalDurationDisplay = document.getElementById('total-duration');
+        var ccToggleBtn = document.getElementById('cc-toggle-btn');
+
+        var player = new Vimeo.Player(iframe);
+
+        // Track CC state
+        var ccEnabled = false;
+        var duration = 0;
+        var isScrubbing = false;
+        let scrubberLock = false;
+
+        // When video plays, hide both overlays
+        player.on('play', function () {
+            bottomOverlay.classList.add('pointer-events');
+            setTimeout(function () {
+                topOverlay.classList.add('hidden')
+                bottomOverlay.classList.add('hidden');
+            }, 2500);
+            console.log('Video is playing: hiding overlays.');
+        });
+
+        // When video pauses or ends, show both overlays
+        player.on('pause', function () {
+            topOverlay.classList.remove('hidden');
+            bottomOverlay.classList.remove('hidden');
+            bottomOverlay.classList.remove('pointer-events');
+
+            console.log('Video is paused: showing overlays.');
+        });
+
+        player.play().then(function () {
+            // The video is playing
+        }).catch(function (error) {
+            switch (error.name) {
+                case 'PasswordError':
+                    // The video is password-protected
+                    console.log("Video is password-protected error:", error.name);
+                    break;
+                case 'PrivacyError':
+                    // The video is private
+                    console.log("Video is private error:", error.name);
+                    break;
+                default:
+                    // Some other error occurred
+                    console, log("Video can not play error:", error.name);
+                    break;
+            }
+        });
+
+        player.on('ended', function () {
+            topOverlay.classList.remove('hidden');
+            bottomOverlay.classList.remove('hidden');
+            console.log('Video ended: showing overlays.');
+        });
+
+        // Update current time display and scrubber value
+        player.on('timeupdate', function (data) {
+            //if (!isScrubbing) {
+            currentTimeDisplay.textContent = formatTime(data.seconds);
+            scrubber.value = data.seconds;
+            //}
+        });
+
+        // Update scrubber value on seeked event
+        player.on('seeked', function (data) {
+            scrubber.value = data.seconds;
+        });
+
+
+        // Get total duration and update scrubber max and time display
+        player.getDuration().then(function (dur) {
+            duration = dur;
+            totalDurationDisplay.textContent = formatTime(dur);
+            scrubber.max = dur;
+        });
+
+        // Format seconds as mm:ss
+        function formatTime(seconds) {
+            var minutes = Math.floor(seconds / 60);
+            var secs = Math.floor(seconds % 60);
+            return (minutes < 10 ? '0' + minutes : minutes) + ':' + (secs < 10 ? '0' + secs : secs);
+        }
+
+        // prevents the click from reaching elements underneath the overlay and scrubber
+        document.querySelectorAll('.overlay-container, #scrubber').forEach(function (element) {
+            element.addEventListener('click', function (event) {
+                // Block clicks when the overlay container or scrubber itself is clicked, not on its children (e.g., buttons)
+                if (event.target === element) {
+                    event.stopPropagation();
+                }
+            });
+        });
+
+
+        // Play Button
+        document.getElementById('play-btn').addEventListener('click', function () {
+            document.dispatchEvent(new Event("togglePlayPause"));
+        });
+
+        ccToggleBtn.addEventListener('click', function () {
+            if (!ccEnabled) {
+                player.enableTextTrack('en').then(function (track) {
+                    ccEnabled = true;
+                    ccToggleBtn.textContent = 'CC On';
+                    console.log('Closed captions enabled:', track);
+                }).catch(function (error) {
+                    console.error('Error enabling closed captions:', error);
+                });
+            } else {
+                player.disableTextTrack().then(function () {
+                    ccEnabled = false;
+                    ccToggleBtn.textContent = 'CC Off';
+                    console.log('Closed captions disabled');
+                }).catch(function (error) {
+                    console.error('Error disabling closed captions:', error);
+                });
+            }
+        });
+
+
+        document.addEventListener('click', function (event) {
+            console.log("Click detected on:", event.target);
+
+            // Ensure we check if the click is on a button
+            if (event.target.tagName === 'BUTTON') {
+                console.log("Button clicked:", event.target);
+                event.target.focus();  // Ensure focus is on the clicked button
+                scrubberLock = true;   // Lock the scrubber when a button is focused
+                console.log("Button focused, scrubber lock enabled.");
+            } else {
+                scrubberLock = false;  // Set scrubberLock to false if click is outside the button
+                console.log("Clicked outside button, scrubber lock disabled.");
+            }
+        });
+
+        // Keyboard scrubbing: Left arrow to rewind 5 seconds, right arrow to forward 5 seconds
+        document.addEventListener('keydown', function (event) {
+
+            if (scrubberLock) return;
+
+            // Avoid interfering with text inputs
+            if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+                return;
+            }
+            if (event.key === "ArrowRight") {
+                player.getCurrentTime().then(function (seconds) {
+                    console.log("ArrowRight Forward");
+                    let newTime = seconds + 5;
+                    let scrubberTime = newTime;
+                    let newCurrentTime = newTime;
+                    if (newTime >= duration) {
+                        scrubberTime = duration;
+                        newCurrentTime = duration - 0.2; // Ensure we stay within limits
+                    }
+                    scrubber.value = scrubberTime; // Update scrubber UI
+                    player.setCurrentTime(newCurrentTime).then(function () {
+                    }).catch(function (error) {
+                        console.error('Error forwarding video:', error);
+                    });
+                });
+            } else if (event.key === "ArrowLeft") {
+                player.getCurrentTime().then(function (seconds) {
+                    console.log("ArrowLeft Rewind");
+                    let newTime = Math.max(seconds - 5, 0);
+                    scrubber.value = newTime; // Update scrubber UI                    
+                    player.setCurrentTime(newTime).then(function () {
+                    }).catch(function (error) {
+                        console.error('Error rewinding video:', error);
+                    });
+                });
+            } else if (event.key === "Enter") {
+                console.log("Enter Key Pressed");
+                document.dispatchEvent(new Event("togglePlayPause"));
+            }
+        });
+
+
+        // Update Button Text
+        function playPauseButton(paused) {
+            let button = document.getElementById("play-btn");
+            if (button) {
+                button.textContent = paused ? "Pause" : "Play";
+            }
+        }
+
+        // Custom Event Listner for play pause control
+        document.addEventListener("togglePlayPause", function () {
+            player.getPaused().then(function (paused) {
+                playPauseButton(paused);
+                console.log(`CustomEvent: ${paused ? "Play" : "Pause"} Video`);
+                let action = paused ? player.play() : player.pause();
+                action.catch(function (error) {
+                    console.error(`Error ${paused ? "playing" : "pausing"} the video:`, error);
+                });
+            });
+        });
+
+        // Scrubber events: update video time when user interacts with the scrubber
+        scrubber.addEventListener('input', function () {
+            isScrubbing = true;
+            currentTimeDisplay.textContent = formatTime(scrubber.value);
+        });
+
+        scrubber.addEventListener('change', function () {
+            player.setCurrentTime(parseFloat(scrubber.value)).catch(function (error) {
+                console.error('Error scrubbing video:', error);
+            });
+            isScrubbing = false;
+
+            // Seek to the new time
+            player.setCurrentTime(newTime).catch(function (error) {
+                console.error('Error scrubbing video:', error);
+            });
+
+        });
+
+    })();        
+    </script>
+</body>
+
+</html>

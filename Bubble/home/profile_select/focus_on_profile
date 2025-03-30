@@ -1,0 +1,47 @@
+// Set Profile focus to Profile in use
+(function () {
+
+    const MAX_RETRIES = 20; // 20 attempts * 100ms = 2 seconds
+       
+        // 2. Focus Restoration
+    function restoreFocus() {
+        //fetch current profile_id in use 
+        const storedData = sessionStorage.getItem(`profile_uid`);
+        if (storedData) {
+            const { val: id } = JSON.parse(storedData || '{}'); 
+            let attempts = 0;
+            let focusChecks = 0;
+    
+            const retryInterval = setInterval(() => {
+                attempts++;
+                const element = document.getElementById(id);
+    
+                if (element) {
+                    try {
+                        element.focus();
+                    } catch (error) {
+                        console.log("Focus failed silently");
+                    }
+    
+                    // Verify if the focus is correctly set
+                    const checkFocusInterval = setInterval(() => {
+                        focusChecks++;
+                        if (document.activeElement === element) {
+                            clearInterval(checkFocusInterval);
+                        } else if (focusChecks >= 5) {
+                            element.focus(); // Retry setting focus if not matched
+                            focusChecks = 0; // Reset check counter
+                        }
+                    }, 200);
+    
+                    clearInterval(retryInterval);
+                } else if (attempts >= MAX_RETRIES) {
+                    clearInterval(retryInterval);
+                }
+            }, 100);
+        } 
+    }
+        
+    window.addEventListener('pageshow', restoreFocus);
+    
+    })();

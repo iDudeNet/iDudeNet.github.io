@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,9 +9,11 @@
     #vimeo-player {
       width: 100%;
       height: 0;
-      padding-top: 56.25%; /* 16:9 aspect ratio */
+      padding-top: 56.25%;
+      /* 16:9 aspect ratio */
       position: relative;
     }
+
     #vimeo-player iframe {
       position: absolute;
       top: 0;
@@ -20,6 +23,7 @@
     }
   </style>
 </head>
+
 <body>
   <div id="vimeo-player" tabindex="0">
     <!-- Vimeo player will be loaded here -->
@@ -27,8 +31,9 @@
 
   <script src="https://player.vimeo.com/api/player.js"></script>
   <script>
+   
     // Global player variable
-    let player;
+    window.player = null;
 
     // Get the user agent string
     var userAgent = navigator.userAgent;
@@ -44,56 +49,41 @@
     // Replace with your fallback Vimeo video ID
     const errorVideoId = '920877432';
 
-    // Fetch the video info from Vimeo API
     fetch('https://api.vimeo.com/videos/' + videoId, {
-      method: 'GET',
-      headers: {
-        'Authorization': 'Bearer 233acfe488559f230a85fec4ca4d0785' // Replace with your Vimeo API access token
-      }
+      headers: { 'Authorization': 'Bearer 233acfe488559f230a85fec4ca4d0785' }
     })
-    .then(response => {
-      if (response.ok) {
-        console.log('Video exists');
-        // Create a new Vimeo Player object and assign to global variable
-        player = new Vimeo.Player(document.getElementById('vimeo-player'), {
-          url: 'https://vimeo.com/' + videoId,
-          autoplay: true,
-          autopause: false,
-          badge: false,
-          keyboard: true,
-          controls: true,
-          pip: false,
-          loop: false
+      .then(response => response.ok ? response.json() : Promise.reject('Video not found'))
+      .then(data => {
+        console.log("Embed URL:", data.player_embed_url);
+
+        window.player = new Vimeo.Player(document.getElementById('vimeo-player'), {
+          url: data.player_embed_url,
+              autoplay: true,
+              autopause: false,
+              badge: false,
+              keyboard: true,
+              controls: true,
+              pip: false,
+              loop: false
         });
-      } else {
-        console.log('Video does not exist');
-        player = new Vimeo.Player(document.getElementById('vimeo-player'), {
-          url: 'https://vimeo.com/' + errorVideoId,
-          autoplay: true,
-          autopause: false,
-          badge: false,
-          keyboard: true,
-          controls: true,
-          pip: false,
-          loop: true
-        });
-      }
-      // Once the player is created, you can attach events
-      setupPlayerEvents();
-    })
-    .catch(error => {
-      console.error('Error checking video existence:', error);
-    });
+
+        setupPlayerEvents();
+      })
+      .catch(error => {
+        console.error('Vimeo API Error:', error); 
+        // Fallback with errorVideoId
+      });
+
 
     // Function to set up player events
     function setupPlayerEvents() {
-      player.on('loaded', function() {
+      player.on('loaded', function () {
         console.log('Video loaded successfully');
 
-        player.ready().then(function() {
-          player.play().then(function() {
+        player.ready().then(function () {
+          player.play().then(function () {
             console.log('Video started playing');
-          }).catch(function(error) {
+          }).catch(function (error) {
             console.log('Error playing the video:', error);
           });
 
@@ -102,11 +92,11 @@
         });
       });
 
-      player.on('play', function() {
+      player.on('play', function () {
         isPlaying = true;
       });
 
-      player.on('pause', function() {
+      player.on('pause', function () {
         isPlaying = false;
       });
     }
@@ -125,49 +115,49 @@
     }
 
     function pausePlayer() {
-      player.pause().then(function() {
+      player.pause().then(function () {
         console.log('Video paused');
         isPlaying = false;
-      }).catch(function(error) {
+      }).catch(function (error) {
         console.error('Error pausing video:', error);
       });
     }
 
     function playPlayer() {
-      player.play().then(function() {
+      player.play().then(function () {
         console.log('Video playing');
         isPlaying = true;
-      }).catch(function(error) {
+      }).catch(function (error) {
         console.error('Error playing video:', error);
       });
     }
 
     function scrubForward() {
-      player.getCurrentTime().then(function(seconds) {
-        player.setCurrentTime(seconds + 5).catch(function(error) {
+      player.getCurrentTime().then(function (seconds) {
+        player.setCurrentTime(seconds + 5).catch(function (error) {
           console.error('Error scrubbing forward:', error);
         });
-      }).catch(function(error) {
+      }).catch(function (error) {
         console.error('Error getting current time:', error);
       });
     }
 
     function scrubBackward() {
-      player.getCurrentTime().then(function(seconds) {
+      player.getCurrentTime().then(function (seconds) {
         var newTime = seconds - 5;
         if (newTime < 0) {
           newTime = 0;
         }
-        player.setCurrentTime(newTime).catch(function(error) {
+        player.setCurrentTime(newTime).catch(function (error) {
           console.error('Error scrubbing backward:', error);
         });
-      }).catch(function(error) {
+      }).catch(function (error) {
         console.error('Error getting current time:', error);
       });
     }
 
     // Add event listeners for key presses
-    document.addEventListener('keydown', function(event) {
+    document.addEventListener('keydown', function (event) {
       // Keycodes for LGTV 
       if (event.keyCode === 13) { // Enter OK key on RC
         if (!keydown_ToggleLock) {
@@ -192,7 +182,7 @@
       }
     });
 
-    document.addEventListener('keyup', function(event) {
+    document.addEventListener('keyup', function (event) {
       if (event.keyCode === 13) { // Enter OK key on RC
         keydown_ToggleLock = false;
       }
@@ -200,7 +190,7 @@
 
     // LGTV WebOS focus management
     if (WebOS) {
-      setInterval(function() {
+      setInterval(function () {
         var vimeoPlayer = document.getElementById('vimeo-player');
         if (vimeoPlayer && document.activeElement !== vimeoPlayer) {
           vimeoPlayer.focus();
@@ -209,4 +199,5 @@
     }
   </script>
 </body>
+
 </html>
