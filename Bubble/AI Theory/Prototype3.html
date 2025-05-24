@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Recursive Causality Agent (RCA) Prototype</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #111; color: #fff; margin: 0; padding: 0; }
+    canvas { display: block; background: #222; margin: 0 auto; }
+    #stats, #log { max-width: 800px; margin: 10px auto; padding: 10px; background: #333; border-radius: 8px; }
+    .stat { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    #controls { text-align: center; margin: 10px; }
+    button { padding: 10px 20px; font-size: 16px; margin: 5px; }
+    #log { height: 150px; overflow-y: auto; font-size: 14px; }
+  </style>
+</head>
+<body>
+<canvas id="canvas" width="800" height="400"></canvas>
+<div id="stats">
+  <div class="stat"><span>Energy:</span> <span id="energy">0</span></div>
+  <div class="stat"><span>Emotion:</span> <span id="emotion">-</span></div>
+  <div class="stat"><span>Action:</span> <span id="action">-</span></div>
+  <div class="stat"><span>Effects:</span> <span id="effects">-</span></div>
+</div>
+<div id="controls">
+  <button onclick="toggleSimulation()" id="toggleBtn">Pause</button>
+</div>
+<div id="log"></div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+// RCA Agent initial state
+const agent = {
+  x: 100,
+  y: 200,
+  energy: 10000000000,
+  emotion: "Neutral",
+  action: "Idle",
+  effects: "None"
+};
+
+let isRunning = true;
+let logEl = document.getElementById("log");
+
+function log(message) {
+  const entry = document.createElement("div");
+  entry.textContent = message;
+  logEl.appendChild(entry);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function updateStats() {
+  document.getElementById("energy").textContent = agent.energy.toFixed(0);
+  document.getElementById("emotion").textContent = agent.emotion;
+  document.getElementById("action").textContent = agent.action;
+  document.getElementById("effects").textContent = agent.effects;
+}
+
+// Define environmental triggers
+const environmentZones = [
+  { x: 600, y: 200, radius: 40, type: "Reward", color: "green" },
+  { x: 400, y: 100, radius: 40, type: "Fear", color: "red" }
+];
+
+function drawEnvironment() {
+  environmentZones.forEach(zone => {
+    ctx.beginPath();
+    ctx.arc(zone.x, zone.y, zone.radius, 0, Math.PI * 2);
+    ctx.fillStyle = zone.color;
+    ctx.fill();
+  });
+}
+
+function drawAgent() {
+  ctx.beginPath();
+  ctx.arc(agent.x, agent.y, 10, 0, Math.PI * 2);
+  ctx.fillStyle = "yellow";
+  ctx.fill();
+}
+
+function applyRCA() {
+  // Basic weighted random RCA-based decision logic
+  let dx = (Math.random() - 0.5) * 20;
+  let dy = (Math.random() - 0.5) * 20;
+
+  // Analyze proximity to environment
+  agent.effects = "None";
+  for (let zone of environmentZones) {
+    let dist = Math.hypot(agent.x - zone.x, agent.y - zone.y);
+    if (dist < zone.radius + 10) {
+      if (zone.type === "Reward") {
+        agent.energy += 10;
+        agent.emotion = "Happy";
+        agent.effects = "Boosted";
+        agent.action = "Gravitate to Reward";
+        dx *= 0.5;
+        dy *= 0.5;
+      } else if (zone.type === "Fear") {
+        agent.energy -= 5;
+        agent.emotion = "Anxious";
+        agent.effects = "Retreating";
+        agent.action = "Flee";
+        dx *= -1;
+        dy *= -1;
+      }
+      log(`Zone effect: ${zone.type} zone triggered.`);
+    }
+  }
+
+  // Update agent position
+  agent.x = Math.max(0, Math.min(canvas.width, agent.x + dx));
+  agent.y = Math.max(0, Math.min(canvas.height, agent.y + dy));
+
+  // Drain energy passively
+  agent.energy -= 2;
+
+  if (agent.energy <= 0) {
+    agent.action = "Depleted";
+    agent.emotion = "Exhausted";
+    agent.effects = "None";
+    log("Agent depleted energy and stopped.");
+    isRunning = false;
+    document.getElementById("toggleBtn").textContent = "Play";
+  }
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawEnvironment();
+  drawAgent();
+  updateStats();
+}
+
+function simulate() {
+  if (isRunning) {
+    applyRCA();
+    render();
+  }
+}
+
+let interval = setInterval(simulate, 10); // 1 second interval
+
+function toggleSimulation() {
+  isRunning = !isRunning;
+  document.getElementById("toggleBtn").textContent = isRunning ? "Pause" : "Play";
+}
+
+render(); // Initial draw
+</script>
+</body>
+</html>

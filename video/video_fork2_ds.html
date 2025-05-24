@@ -91,6 +91,16 @@
             /* Empty for now */
         }
 
+        /* ADD THIS NEW RULE FOR SYMBOL BUTTONS MAKE THEM LARGER THAN TEXT!*/
+        #playButton,
+        #seekBack,
+        #seekForward,
+        #muteButton,
+        #fullscreenButton {
+            font-size: 42px;
+            /* Makes symbols larger than text */
+        }
+
         /* ========== BUTTON STYLES ========== */
         .media-button {
             background: none;
@@ -156,28 +166,36 @@
             font-family: Arial, Helvetica, sans-serif;
         }
 
-        /* ========== TOOLTIPS ========== */
-        .tooltip {
-            position: absolute;
-            bottom: calc(100% + 30px);
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            font-size: 20px;
-            padding: 6px 6px;
-            border-radius: 4px;
-            white-space: nowrap;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.2s;
-            z-index: 10;
-        }
-
         .media-button:hover .tooltip,
         .media-button:focus .tooltip {
             opacity: 1;
         }
+
+        input[type="range"] {
+            width: 100%;
+            /*flex: 1;*/
+            height: 8px;
+            min-width: 50px;
+            border-radius: 6px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
 
         /* ========== CC BUTTON ========== */
         .cc-button {
@@ -231,7 +249,6 @@
                 <div class="button-group-left">
                     <button id="exitButton" class="media-button focusable" aria-label="Exit" tabindex="0">
                         <span class="button-icon">Exit</span>
-                        <span class="tooltip" role="tooltip">Exit</span>
                     </button>
                 </div>
 
@@ -239,21 +256,17 @@
                 <div class="button-group-center">
                     <button class="media-button focusable" id="playButton" aria-label="Play" tabindex="0">
                         <span class="button-icon">▶</span>
-                        <span class="tooltip" role="tooltip">Play</span>
                     </button>
                     <button class="media-button focusable" id="seekBack" aria-label="Rewind 15 seconds" tabindex="0">
                         <span class="button-icon">«</span>
-                        <span class="tooltip" role="tooltip">Backward<br>15s</span>
                     </button>
                     <button class="media-button focusable" id="seekForward" aria-label="Fast forward 15 seconds"
                         tabindex="0">
                         <span class="button-icon">»</span>
-                        <span class="tooltip" role="tooltip">Forward<br>15s</span>
                     </button>
                     <div class="volume-container">
                         <button class="media-button focusable" id="muteButton" aria-label="Mute">
                             <span class="button-icon">🔊</span>
-                            <span class="tooltip" role="tooltip">Mute</span>
                         </button>
                     </div>
                     <button class="cc-button focusable" id="ccButton" aria-pressed="false" tabindex="0">
@@ -263,7 +276,6 @@
                     <button class="media-button hidden" id="fullscreenButton" aria-label="Enter full screen"
                         tabindex="0">
                         <span class="button-icon">⛶</span>
-                        <span class="tooltip" role="tooltip">Enter Full screen</span>
                     </button>
                 </div>
 

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/@mux/mux-player"></script>
+<style>
+    mux-player { --controls: none; }
+</style>
+<mux-player id="mux-player"
+  playback-id="Wk02zqycW6J4hFE00B01pPvpbQ5QEyUAVv5d8gpCSrEKS00"
+  metadata-viewer-user-id="Placeholder (optional)"
+  metadata-video-title="The Mysteries of Pyramids"
+  style="--controls: none;" 
+  preload="auto"
+  playsinline
+  aria-label="Video content"
+></mux-player>
+<!-- ─── Autoplay script ─────────────────────────────────────── -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const player = document.getElementById('mux-player');
+      if (!player) {
+        console.error('muxPlayer element not found');
+        return;
+      }
+    
+      player.addEventListener('canplay', async () => {
+        try {
+          await player.play();             // kick-off
+          console.log('Playback started');
+        } catch (err) {
+          console.warn('Autoplay blocked:', err);
+          // TODO: show custom play button
+        }
+      });
+    });
+    </script>
+</body>
+</html>

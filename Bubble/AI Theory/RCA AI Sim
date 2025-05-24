@@ -1,0 +1,124 @@
+# RCA-BASED AI PROTOTYPE: Narrative & Environment Agent
+
+from typing import List, Dict, Callable
+import random
+
+# --- Data Types ---
+class State:
+    def __init__(self, fear=0.0, curiosity=0.0, memory=None):
+        self.fear = fear
+        self.curiosity = curiosity
+        self.memory = memory or []
+
+    def as_dict(self):
+        return {'fear': self.fear, 'curiosity': self.curiosity}
+
+class Event:
+    def __init__(self, description: str, memory_weight=0.5):
+        self.description = description
+        self.memory_weight = memory_weight
+
+# --- RCA Logic ---
+def scoped_memory(memory: List[Dict], relevance_fn: Callable):
+    """
+    Filter memory based on a scoped relevance function (AXIOM 10)
+    """
+    return [m for m in memory if relevance_fn(m)]
+
+def RCA(state: State, event: Event, relevance_fn: Callable):
+    """
+    Recursive Causal Abstraction: updates emotional state based on event and relevant memory
+    """
+    relevant_memory = scoped_memory(state.memory, relevance_fn)
+
+    fear = state.fear
+    curiosity = state.curiosity
+
+    # Simulate recursive influence from past memory
+    for mem in relevant_memory:
+        if "fear" in mem:
+            fear += mem["fear"] * mem.get("weight", 0.5)
+        if "curiosity" in mem:
+            curiosity += mem["curiosity"] * mem.get("weight", 0.5)
+
+    # Influence from new event
+    if "knock" in event.description:
+        fear += 0.2
+    if "memory" in event.description:
+        fear += 0.3
+
+    # Save current state to memory
+    new_mem = {
+        "fear": fear,
+        "curiosity": curiosity,
+        "description": event.description,
+        "weight": event.memory_weight
+    }
+
+    updated_memory = state.memory + [new_mem]
+    return State(fear=min(fear, 1.0), curiosity=min(curiosity, 1.0), memory=updated_memory)
+
+# --- Toy Narrative Simulation ---
+
+def simulate_narrative():
+    timeline = [
+        Event("A loud knock is heard.", memory_weight=0.4),
+        Event("The character remembers a break-in from childhood.", memory_weight=0.6),
+        Event("Nothing happens. Silence.", memory_weight=0.2),
+    ]
+
+    def relevance(mem):
+        return mem["weight"] > 0.3
+
+    state = State()
+    for t, event in enumerate(timeline):
+        print(f"\n[Event {t}] {event.description}")
+        state = RCA(state, event, relevance_fn=relevance)
+        print(f"State: {state.as_dict()}")
+
+# --- Agent-Based Grid Sim ---
+
+grid = [
+    ["green", "red", "green"],
+    ["blue", "green", "yellow"]
+]
+
+def simulate_agent():
+    position = (0, 0)
+    state = State()
+
+    tile_effects = {
+        "red": {"fear": 0.3, "curiosity": -0.1},
+        "green": {"curiosity": 0.2},
+        "blue": {"curiosity": 0.1},
+        "yellow": {"fear": -0.1, "curiosity": 0.3}
+    }
+
+    def relevance(mem):
+        return mem["fear"] > 0.2
+
+    for step in range(4):
+        x, y = position
+        color = grid[x][y]
+        effect = tile_effects.get(color, {})
+
+        event = Event(f"Stepped on {color} tile", memory_weight=0.5)
+        for key in effect:
+            setattr(state, key, max(0.0, getattr(state, key) + effect[key]))
+
+        print(f"\n[Step {step}] Position: {position}, Tile: {color}")
+        print(f"Pre-RCA State: {state.as_dict()}")
+
+        state = RCA(state, event, relevance_fn=relevance)
+        print(f"Post-RCA State: {state.as_dict()}")
+
+        # Random move
+        position = (random.randint(0, 1), random.randint(0, 2))
+
+# --- Run Demos ---
+if __name__ == "__main__":
+    print("==== NARRATIVE SIM ====")
+    simulate_narrative()
+
+    print("\n==== GRID AGENT SIM ====")
+    simulate_agent()

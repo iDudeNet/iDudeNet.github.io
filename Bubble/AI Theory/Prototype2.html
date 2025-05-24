@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>RCA Prototype - Browser Simulation</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    #sim {
+      width: 100vw;
+      height: 100vh;
+      background: #111;
+      position: relative;
+      overflow: hidden;
+    }
+    .agent {
+      width: 40px;
+      height: 40px;
+      background: #2ecc71;
+      position: absolute;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+    .status {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.8);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+<div id="sim">
+  <div class="agent" id="agent"></div>
+  <div class="status" id="status">Status</div>
+</div>
+<script>
+  const agent = document.getElementById("agent");
+  const status = document.getElementById("status");
+  const bounds = document.getElementById("sim").getBoundingClientRect();
+
+  // RCA State and Data Definitions
+  let RCA = {
+    position: { x: 100, y: 100 },
+    goal: { x: 300, y: 300 },
+    energy: 100,
+    emotion: "curious",
+
+    // Weighted causal driver table (mock-up)
+    influences: [
+      { cause: "low_energy", effect: "seek_rest", weight: 0.9 },
+      { cause: "curious", effect: "explore", weight: 0.7 },
+      { cause: "near_goal", effect: "celebrate", weight: 1.0 }
+    ],
+
+    // Recursive evaluation of situation
+    evaluate: function() {
+      const dx = this.goal.x - this.position.x;
+      const dy = this.goal.y - this.position.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+
+      let currentEffects = [];
+
+      if (this.energy < 20) {
+        currentEffects.push("seek_rest");
+        this.emotion = "tired";
+      } else if (dist < 20) {
+        currentEffects.push("celebrate");
+        this.emotion = "happy";
+      } else {
+        currentEffects.push("explore");
+      }
+
+      return currentEffects;
+    },
+
+    // RCA Logic for determining next action
+    decide: function(effects) {
+      if (effects.includes("seek_rest")) {
+        this.energy += 1; // simulate resting
+        return "resting";
+      } else if (effects.includes("celebrate")) {
+        this.energy -= 0.5;
+        return "dancing";
+      } else {
+        this.energy -= 1;
+        this.position.x += (this.goal.x - this.position.x) * 0.05;
+        this.position.y += (this.goal.y - this.position.y) * 0.05;
+        return "moving";
+      }
+    }
+  };
+
+  // Simulation Tick
+  function tick() {
+    let effects = RCA.evaluate(); // RCA AXIOM 6 & 10 applied here
+    let action = RCA.decide(effects); // RCA Decision Logic
+
+    // Update UI
+    agent.style.left = RCA.position.x + "px";
+    agent.style.top = RCA.position.y + "px";
+    agent.style.background = RCA.emotion === "happy" ? "#f1c40f" : (RCA.emotion === "tired" ? "#e74c3c" : "#2ecc71");
+
+    status.innerHTML = `
+      <strong>RCA Agent Status</strong><br>
+      Pos: (${RCA.position.x.toFixed(1)}, ${RCA.position.y.toFixed(1)})<br>
+      Goal: (${RCA.goal.x}, ${RCA.goal.y})<br>
+      Energy: ${RCA.energy.toFixed(1)}<br>
+      Emotion: ${RCA.emotion}<br>
+      Action: ${action}<br>
+      Effects: ${effects.join(", ")}
+    `;
+
+    requestAnimationFrame(tick);
+  }
+
+  tick();
+</script>
+</body>
+</html>

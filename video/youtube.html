@@ -6,7 +6,164 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Final Video Player</title>
     <script src="https://player.vimeo.com/api/player.js"></script>
+    <script type="text/javascript" src="https://webtv.roybiverse.com/spatial_navigation.js"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script>
+        /*
+        * Custom Spatial Navigation setup and control
+        * Handles Mutations on DOM
+        * All focusable Elements should have the class="focusable"
+        * assigned to them in HTML for this to work
+        */
+
+        (function () {
+
+            // Configuration Vars
+            var startFocusElementSelect = 'media-controller .focusable';
+            var loadingElementID = 'media-controller';
+            // internal use Wars
+            var isSpatialNavInitialized = false;
+
+            // Function to asynchronously find the starting focus element
+            function getStartFocus() {
+                var elementSelector = startFocusElementSelect;
+                var maxAttempts = 10;
+                var interval = 300; // milliseconds
+                var durationInSeconds = 3;
+                var duration = durationInSeconds * 1000; // Convert duration to milliseconds
+
+                return new Promise(function (resolve, reject) {
+                    var attempts = 0;
+                    var startTime = Date.now();
+
+                    function findElement() {
+                        var element = document.querySelector(elementSelector);
+                        if (element) {
+                            resolve(element);
+                        } else if (attempts < maxAttempts && (Date.now() - startTime) < duration) {
+                            attempts++;
+                            setTimeout(findElement, interval);
+                        } else {
+                            reject(new Error('Element not found within the specified time and attempts.'));
+                        }
+                    }
+                    findElement();
+                });
+            }
+
+            function SpatialNav() {
+
+                // Remove previous event listeners (prevents duplicate listners)
+                var previousFocusableElements = document.querySelectorAll('.enterkey2click');
+                previousFocusableElements.forEach(function (element) {
+                    element.removeEventListener('keydown', handleKeyPress);
+                });
+
+                // Initialize SpatialNavigation if not already initialized
+                if (!isSpatialNavInitialized) {
+                    SpatialNavigation.init();
+                    isSpatialNavInitialized = true;
+                }
+
+                // Add focusable elements
+                SpatialNavigation.add({
+                    selector: ".focusable",
+                });
+
+                SpatialNavigation.makeFocusable();
+
+                // Add Keydown Event listeners to focusable Elements
+                var focusableElements = document.querySelectorAll('.enterkey2click');
+                focusableElements.forEach(function (element) {
+                    element.addEventListener('keydown', handleKeyPress);
+                });
+
+                // updated to work with a promises
+                getStartFocus()
+                    .then(function (startFocusElement) {
+                        //console.log('Start focus element found:', startFocusElement);
+                        SpatialNavigation.focus(startFocusElement);
+                        startFocusElement.focus();
+                        // Starting focus element
+                    })
+                    .catch(function (error) {
+                        console.error('Error:', error.message);
+                    });
+            }
+
+            // Function to handle keyboard events
+            function handleKeyPress(event) {
+                // Check if the key pressed is Enter (key code 13)
+                if (event.keyCode === 13) {
+                    // Trigger a click event on the focused element
+                    event.target.click();
+                }
+            }
+
+            // Dealing with total counts since detection of actually mutations on nodes by specific class do not work with bubble
+            var focusableCount = 0;
+
+            // Function to update the count of elements with class "focusable"
+            function updateFocusableCount() {
+                const targetNode = document.getElementById(loadingElementID);
+                if (!targetNode) return;
+
+                const focusableElements = targetNode.querySelectorAll('.focusable');
+                const newCount = focusableElements.length;
+
+                // Call function only if the count has changed
+                if (newCount !== focusableCount) {
+                    focusableCount = newCount;
+                    handleFocusableCountChange();
+                }
+            }
+
+            // Function to handle focusable count change
+            function handleFocusableCountChange() {
+                console.log('Focusable count changed:', focusableCount);
+                // Call any function or perform any action here
+                SpatialNav();
+            }
+
+            // Function to be executed when target element changes
+            function onChangeCallback(mutationsList, observer) {
+                updateFocusableCount();
+            }
+
+            // Initialize the observer
+            function initializeObserver(targetNode) {
+                // Options for the observer (which mutations to observe from Bubble.io India Lag fest) 
+                const config = { childList: true, subtree: true };
+                // Create an observer instance linked callback function
+                const observer = new MutationObserver(onChangeCallback);
+                // Start observing the target node for configured mutations
+                observer.observe(targetNode, config);
+            }
+
+
+            // Function to periodically check for the presence of the target node (hydration check)!
+            function waitForTargetNode() {
+                console.log("WAIT!")
+                const targetNode = document.getElementById(loadingElementID);
+                if (targetNode) {
+                    SpatialNav();
+                    // If the target node is available...initialize the observer!
+                    initializeObserver(targetNode);
+                    // focusable start count
+                    var start_focusableElements = targetNode.querySelectorAll('.focusable');
+                    focusableCount = start_focusableElements.length; //0
+                } else {
+                    // If the target node is not yet available, wait...try again
+                    setTimeout(waitForTargetNode, 100);
+                }
+            }
+
+            // Start waiting for the target node
+            waitForTargetNode();
+        })();
+
+    </script>
+
     <style>
         /* ========== UPDATED RULES ========== */
         body {
@@ -23,6 +180,7 @@
             position: relative;
             margin: 0 auto;
             overflow: hidden;
+            border: solid 2px blueviolet;
         }
 
         #vimeoIframe {
@@ -35,7 +193,7 @@
             transform: scale(1.001);
         }
 
-        .media-controls {
+        .control-panel {
             display: flex;
             flex-direction: column;
             position: absolute;
@@ -55,19 +213,19 @@
             box-sizing: border-box;
         }
 
-        .media-controls.visible {
+        .control-panel.visible {
             transform: translateY(0);
         }
 
         /* Hide EXIT when controls are hidden */
-        .media-controls:not(.visible) #exitContainer {
+        .control-panel:not(.visible) #exitContainer {
             opacity: 0;
             pointer-events: none;
             transform: translateY(20px);
             /* Slight fade-out animation */
         }
 
-        .media-button {
+        .player-button {
             background: none;
             border: none;
             color: #fff;
@@ -80,20 +238,20 @@
             border: solid 2px transparent;
         }
 
-        .media-button:focus {
+        .player-button:focus {
             background: rgba(255, 255, 255, 0.1);
             border-radius: 4px;
             border: solid 2px #cf0652;
             ;
         }
 
-        .media-button:hover .tooltip,
-        .media-button:focus .tooltip {
+        .player-button:hover .tooltip,
+        .player-button:focus .tooltip {
             opacity: 1;
         }
 
         /* Firefox fix */
-        .media-button::-moz-focus-inner {
+        .player-button::-moz-focus-inner {
             border: 0;
         }
 
@@ -112,24 +270,6 @@
             /* Makes symbols larger than text */
         }
 
-        .tooltip {
-            position: absolute;
-            bottom: calc(100% + 30px);
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            font-size: 20px;
-            padding: 6px 6px;
-            border-radius: 4px;
-            white-space: nowrap;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.2s;
-            z-index: 10;
-        }
-
-
         .slider-time-group {
             width: 100%;
             display: flex;
@@ -147,7 +287,7 @@
             width: 100%;
         }
 
-        
+
         input[type="range"] {
             width: 100%;
             /*flex: 1;*/
@@ -226,9 +366,10 @@
         }
 
         .volume-container {
-            /* position: relative;
+            position: relative;
             display: inline-flex;
-            vertical-align: middle; */
+            vertical-align: middle;
+            */
         }
 
         .cc-button {
@@ -258,10 +399,12 @@
 
         /* Add these new rules */
         #exitContainer {
+            border: solid 2px green;
+            position: fixed;
             pointer-events: none;
             /* position: absolute;*/
-            display: contents;
-            bottom: 150px;
+            /* display: contents; */
+            bottom: 30px;
             left: 30px;
             z-index: 5;
             transition: inherit;
@@ -298,18 +441,36 @@
 
         #playButton {
             margin-left: 0 !important;
-        }        
+        }
+
+        #top-right {
+            position: fixed;
+            pointer-events: none;
+            top: 30px;
+            right: 460px;
+            z-index: 20;
+            background-color: transparent;
+            width: 300px;
+            height: 300;
+            color: #fff;
+        }
     </style>
 </head>
 
 <body>
-    <div class="media-controller">
+    <div class="media-controller" id="media-controller">
+        <div id="top-right">
+            <img src="https://ae4c2a6e0b49000c392c00804b452eb2.cdn.bubble.io/f1743355334568x289011619724762300/RoybiVerse-Logo-2.svg"
+                height="100">
+        </div>
+
         <iframe id="vimeoIframe" src="https://player.vimeo.com/video/1058748705?background=0" frameborder="0"
             allow="autoplay; fullscreen; picture-in-picture" allowfullscreen title="Vimeo video player"
             aria-label="Video content">
         </iframe>
 
-        <div class="media-controls visible" role="toolbar" aria-label="Video controls">
+        <div class="control-panel visible" id="control-panel" role="toolbar" aria-label="Video controls">
+
             <!-- Slider and Time Display Group -->
             <div class="slider-time-group">
                 <input type="range" id="timeRange" class="focusable" min="0" max="100" step="1" value="0"
@@ -317,46 +478,45 @@
                 <div id="timeDisplay" aria-live="off">0:00 / 0:00</div>
             </div>
 
+
             <!-- Button Group Container -->
             <div class="button-group">
+
                 <div id="exitContainer">
-                    <button id="exitButton" class="media-button focusable" aria-label="Exit" tabindex="0">
+                    <button id="exitButton" class="player-button focusable" aria-label="Exit video player" tabindex="0">
                         <span class="button-icon">Exit</span>
-                        <span class="tooltip" role="tooltip">Exit</span>
                     </button>
                 </div>
 
-                <button class="media-button focusable" id="playButton" aria-label="Play" tabindex="0">
+                <button class="player-button focusable" id="playButton" aria-label="Play" tabindex="0">
                     <span class="button-icon">▶</span>
-                    <span class="tooltip" role="tooltip">Play</span>
                 </button>
 
-                <button class="media-button focusable" id="seekBack" aria-label="Rewind 15 seconds" tabindex="0">
+                <button class="player-button focusable" id="seekBack" aria-label="Rewind 15 seconds" tabindex="0">
                     <span class="button-icon">«</span>
-                    <span class="tooltip" role="tooltip">Backward<br>15s</span>
                 </button>
 
-                <button class="media-button focusable" id="seekForward" aria-label="Fast forward 15 seconds" tabindex="0">
+                <button class="player-button focusable" id="seekForward" aria-label="Fast forward 15 seconds"
+                    tabindex="0">
                     <span class="button-icon">»</span>
-                    <span class="tooltip" role="tooltip">Forward<br>15s</span>
                 </button>
 
                 <div class="volume-container">
-                    <button class="media-button focusable" id="muteButton" aria-label="Mute">
+                    <button class="player-button focusable" id="muteButton" aria-label="Mute">
                         <span class="button-icon">🔊</span>
-                        <span class="tooltip" role="tooltip">Mute</span>
                     </button>
                 </div>
 
-                <button class="cc-button focusable" id="ccButton" aria-pressed="false" tabindex="0">
+                <button class="cc-button focusable" id="ccButton" aria-pressed="Toggle closed caption on and off"
+                    tabindex="0">
                     <span class="cc-text">CC</span>
-                    <span class="tooltip">Subtitles</span>
                 </button>
 
-                <button class="media-button hidden" id="fullscreenButton" aria-label="Enter full screen" tabindex="0">
+                <button class="player-button hidden" id="fullscreenButton" aria-label="Enter full screen" tabindex="0">
                     <span class="button-icon">⛶</span>
-                    <span class="tooltip" role="tooltip">Enter Full screen</span>
                 </button>
+
+
             </div>
         </div>
     </div>
@@ -392,7 +552,7 @@
             const mediaController = document.querySelector('.media-controller');
             let duration = 0;
             let isMuted = false;
-            let controlsVisible = true;
+            let isControlPanelOpen = true;
             let lastVolume = 1;
             let hideControlsDelay = 3000;
 
@@ -434,11 +594,9 @@
                     }
                     // Update UI state
                     const icon = controls.playButton.querySelector('.button-icon');
-                    const tooltip = controls.playButton.querySelector('.tooltip');
                     icon.textContent = paused ? '⏸' : '▶';
                     const action = paused ? 'Pause' : 'Play';
                     controls.playButton.setAttribute('aria-label', action);
-                    tooltip.textContent = action;
                 } catch (error) {
                     console.error('Play button error:', error);
                 }
@@ -466,16 +624,84 @@
             });
 
             document.addEventListener('keydown', async (event) => {
-                // BLOCK 1: ENTER KEY
+
+                let focusedElement = SpatialNavigation.getFocusedElement();
+                if (!focusedElement) return; // Prevent errors if nothing is focused
+
+                // set isPlaying Variable
+                const paused = await player.getPaused();
+                const isPlaying = !paused;
+
+                // If the control panel is open, handle keys differently
+                if (isControlPanelOpen) {
+                    if (event.key === 'ArrowLeft') {
+                        closeControlPanel();
+                        event.preventDefault();
+                        return;
+                    }
+                    if (event.key === 'ArrowRight') {
+                        // Navigate inside the panel if needed
+                        event.preventDefault();
+                        return;
+                    }
+                    return; // Prevent other navigation while panel is open
+                }
+
+                // If the panel is closed and LEFT/RIGHT is pressed, open it & focus the slider
+                if (!isControlPanelOpen && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+                    openControlPanel();
+                    focusSlider();
+                    event.preventDefault();
+                    return;
+                }
+
+                // Slider-specific controls
+                if (focusedElement.id === 'timeRange') {
+                    let slider = focusedElement;
+                    let step = parseInt(slider.step) || 1;
+                    let min = parseInt(slider.min) || 0;
+                    let max = parseInt(slider.max) || 100;
+                    let value = parseInt(slider.value);
+                    let handled = false;
+
+                    if (event.key === 'ArrowLeft') {
+                        slider.value = Math.max(min, value - step);
+                        updateTimeDisplay(slider.value);
+                        handled = true;
+                    } else if (event.key === 'ArrowRight') {
+                        slider.value = Math.min(max, value + step);
+                        updateTimeDisplay(slider.value);
+                        handled = true;
+                    } else if (event.key === 'ArrowUp') {
+                        SpatialNavigation.move('up');
+                        handled = true;
+                    } else if (event.key === 'ArrowDown') {
+                        SpatialNavigation.move('down');
+                        handled = true;
+                    }
+
+                    if (handled) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        return;
+                    }
+                }
+
+                // Default navigation
+                if (event.key === 'ArrowUp') {
+                    SpatialNavigation.move('up');
+                } else if (event.key === 'ArrowDown') {
+                    SpatialNavigation.move('down');
+                }
+
+
                 if (event.key === 'Enter') {
                     // KEEP THIS SAFETY CHECK
-                    if (event.target.closest('.media-controls, .media-button, input[type="range"]')) return;
-
+                    if (event.target.closest('.control-panel, .player-button, input[type="range"]')) return;
                     event.preventDefault();
                     try {
                         const paused = await player.getPaused();
                         const icon = controls.playButton.querySelector('.button-icon');
-                        const tooltip = controls.playButton.querySelector('.tooltip');
 
                         if (paused) {
                             // MODIFIED PLAY FLOW
@@ -494,24 +720,19 @@
                         icon.textContent = paused ? '⏸' : '▶';
                         const action = paused ? 'Pause' : 'Play';
                         controls.playButton.setAttribute('aria-label', action);
-                        tooltip.textContent = action;
 
                     } catch (error) {
                         console.error('Enter key error:', error);
                     }
                 }
 
-            });
-
-
-            document.addEventListener('keydown', async (event) => {
                 if (['ArrowUp', 'ArrowDown'].includes(event.key)) {
                     //event.preventDefault();
                     try {
                         const paused = await player.getPaused();
                         const isPlaying = !paused;
 
-                        if (isPlaying && !controlsVisible) {
+                        if (isPlaying && !isControlPanelOpen) {
                             // Force the controls to be visible
                             toggleControlsVisibility(true);
                             // Explicitly set focus on the PlayButton
@@ -526,19 +747,14 @@
                         console.error('Arrow key error:', error);
                     }
                 }
-            });
 
-            document.addEventListener('keydown', async (event) => {
                 const isHorizontalArrow =
                     (event.key === 'ArrowLeft' || event.keyCode === 37) || // Left: 37
                     (event.key === 'ArrowRight' || event.keyCode === 39);   // Right: 39
-
                 if (isHorizontalArrow) {
                     try {
-                        const paused = await player.getPaused();
-                        const isPlaying = !paused;
                         const isSliderFocused = document.activeElement === controls.time;
-                        //controlsVisible
+                        //isControlPanelOpen
 
                         if (!paused && !isSliderFocused) {
                             event.preventDefault();
@@ -549,7 +765,6 @@
                             // Update play button UI
                             controls.playButton.querySelector('.button-icon').textContent = '▶';
                             controls.playButton.setAttribute('aria-label', 'Play');
-                            controls.playButton.querySelector('.tooltip').textContent = 'Play';
 
                             // Show controls and focus slider
                             toggleControlsVisibility(true);
@@ -565,23 +780,26 @@
 
             });
 
+
             // Add/modify a keydown event listener for the slider so that pressing Enter, ArrowUp, or ArrowDown resumes playback.
             // (We use the slider’s keydown event rather than document-wide so that this behavior is only triggered when the slider is focused.)
             controls.time.addEventListener('keydown', async (e) => {
                 // Check for Enter, ArrowUp, or ArrowDown
+                return
+
                 if (['Enter', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
                     e.preventDefault();
                     try {
                         const paused = await player.getPaused();
+
+
                         // Only resume if video is paused (due to slider interaction)
                         if (paused) {
                             await player.play();
                             // Update UI state: change play button to "Pause"
                             const icon = controls.playButton.querySelector('.button-icon');
-                            const tooltip = controls.playButton.querySelector('.tooltip');
                             icon.textContent = '⏸';
                             controls.playButton.setAttribute('aria-label', 'Pause');
-                            tooltip.textContent = 'Pause';
 
                             // Optionally, you can remove focus from the slider
                             controls.time.blur();
@@ -600,22 +818,22 @@
 
             // ENHANCED TOGGLE FUNCTION
             function toggleControlsVisibility(visible = null) {
-                const mediaControls = document.querySelector('.media-controls');
+                const mediaControls = document.querySelector('.control-panel');
 
                 // Force state if specified
 
                 if (typeof visible === 'boolean') {
-                    controlsVisible = visible;
+                    isControlPanelOpen = visible;
                 } else {
-                    controlsVisible = !controlsVisible;
+                    isControlPanelOpen = !isControlPanelOpen;
                 }
 
                 // DOM manipulation
-                mediaControls.classList.toggle('visible', controlsVisible);
+                mediaControls.classList.toggle('visible', isControlPanelOpen);
                 void mediaControls.offsetHeight; // Force layout recalculation
 
                 // Focus management
-                if (!controlsVisible) {
+                if (!isControlPanelOpen) {
                     document.activeElement?.blur();
                 }
 
@@ -637,7 +855,7 @@
 
             // ADD TO RESET TIMER ON INTERACTION
             // Update the mousemove auto-hide delay to use hideControlsDelay
-            document.querySelector('.media-controls').addEventListener('mousemove', () => {
+            document.querySelector('.control-panel').addEventListener('mousemove', () => {
                 if (playHideTimeout) {
                     clearTimeout(playHideTimeout);
                     playHideTimeout = setTimeout(() => {
@@ -659,11 +877,9 @@
                     await player.setVolume(newVolume);
 
                     const icon = controls.mute.querySelector('.button-icon');
-                    const tooltip = controls.mute.querySelector('.tooltip');
                     const isNowMuted = newVolume === 0;
 
                     icon.textContent = isNowMuted ? '🔇' : '🔊';
-                    tooltip.textContent = isNowMuted ? 'Unmute' : 'Mute';
                     controls.mute.setAttribute('aria-label', isNowMuted ? 'Unmute' : 'Mute');
                 } catch (error) {
                     console.error('Mute error:', error);
@@ -702,16 +918,13 @@
             // Fullscreen
             controls.fullscreen.addEventListener('click', () => {
                 const icon = controls.fullscreen.querySelector('.button-icon');
-                const tooltip = controls.fullscreen.querySelector('.tooltip');
                 const isFullscreen = !!document.fullscreenElement;
 
                 if (isFullscreen) {
                     document.exitFullscreen();
-                    tooltip.textContent = 'Enter full screen';
                     controls.fullscreen.setAttribute('aria-label', 'Enter fullscreen');
                 } else {
                     mediaController.requestFullscreen();
-                    tooltip.textContent = 'Exit full screen';
                     controls.fullscreen.setAttribute('aria-label', 'Exit fullscreen');
                 }
             });
@@ -722,17 +935,14 @@
                     const tracks = await player.getTextTracks();
                     const autoGenTrack = tracks.find(t => t.language === 'en-x-autogen');
                     const isActive = autoGenTrack?.mode === 'showing';
-                    const tooltip = controls.cc.querySelector('.tooltip');
 
                     if (isActive) {
                         await player.disableTextTrack();
                         controls.cc.classList.remove('active');
-                        tooltip.textContent = 'Enable captions';
                         controls.cc.setAttribute('aria-pressed', 'false');
                     } else if (autoGenTrack) {
                         await player.enableTextTrack(autoGenTrack.language, autoGenTrack.kind);
                         controls.cc.classList.add('active');
-                        tooltip.textContent = 'Disable captions';
                         controls.cc.setAttribute('aria-pressed', 'true');
                     } else {
                         console.warn('Auto-generated captions not available');

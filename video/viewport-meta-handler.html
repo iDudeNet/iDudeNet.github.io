@@ -1,0 +1,502 @@
+<style>
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        overflow: hidden !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        background: black !important;
+    }
+
+    body {
+        transform-origin: top left !important;
+        transition: transform 0.2s ease !important;
+    }
+</style>
+
+<body>
+    <!-- Your content directly inside body here -->
+</body>
+
+<script>
+    function scaleApp() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        console.log("innerWidth", width);
+        const designWidth = 1920;
+        const designHeight = 1080;
+
+        const scaleX = width / designWidth;
+        const scaleY = height / designHeight;
+        const scale = Math.min(scaleX, scaleY);
+
+        document.body.style.setProperty('transform', `scale(${scale})`, 'important');
+    }
+
+    window.addEventListener('load', scaleApp);
+    window.addEventListener('resize', scaleApp);
+</script>
+
+
+<style>
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        overflow: hidden !important;
+        background: black !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+
+    body {
+        transform-origin: top left !important;
+        transition: transform 0.2s ease !important;
+    }
+</style>
+
+<body>
+    <!-- Your content directly inside body here -->
+</body>
+
+<script>
+    function scaleApp() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        const designWidth = 1920;
+        const designHeight = 1080;
+
+        // Calculate scaling factors for both width and height
+        const scaleX = width / designWidth;
+        const scaleY = height / designHeight;
+
+        // Use the largest scale factor that fits, but don't scale too much.
+        const scale = Math.min(scaleX, scaleY);
+
+        // Apply the scaling transform to the body
+        document.body.style.setProperty('transform', `scale(${scale})`, 'important');
+    }
+
+    window.addEventListener('load', scaleApp);
+    window.addEventListener('resize', scaleApp);
+</script>
+
+
+
+
+
+
+<style>
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 100% !important;
+        width: 100% !important;
+        overflow: auto !important;
+    }
+</style>
+
+<script>
+    function scaleApp() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const designWidth = 1920;  // Design width (for 1080p)
+        const designHeight = 1080; // Design height (for 1080p)
+        let scale = 1;
+
+        if (width < designWidth || height < designHeight) {
+            const scaleX = width / designWidth;
+            const scaleY = height / designHeight;
+            scale = Math.min(scaleX, scaleY);
+        }
+
+        document.documentElement.style.setProperty('transform', `scale(${scale})`, 'important');
+        document.documentElement.style.setProperty('transform-origin', 'top left', 'important');
+        document.documentElement.style.setProperty('width', `${100 / scale}vw`, 'important');
+        document.documentElement.style.setProperty('height', `${100 / scale}vh`, 'important');
+    }
+
+    window.addEventListener('load', scaleApp);
+    window.addEventListener('resize', scaleApp);
+</script>
+
+
+
+<style>
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        height: 100% !important;
+        width: 100% !important;
+        overflow: auto !important;
+        /* Allow scrolling */
+    }
+</style>
+
+<script>
+    function scaleApp() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const designWidth = 1920;  // Your design width (1080p design)
+        const designHeight = 1080; // Your design height (1080p design)
+        let scale = 1;
+
+        if (width < designWidth || height < designHeight) {
+            const scaleX = width / designWidth;
+            const scaleY = height / designHeight;
+            scale = Math.min(scaleX, scaleY);
+        }
+
+        // Apply scaling to the entire document (<html> element)
+        document.documentElement.style.setProperty('transform', `scale(${scale})`, 'important');
+        document.documentElement.style.setProperty('transform-origin', 'top left', 'important');
+        // Removed forced width and height so that the scrollable area reflects the actual scaled size.
+    }
+
+    window.addEventListener('load', scaleApp);
+    window.addEventListener('resize', scaleApp);
+</script>
+
+
+
+
+
+
+
+
+<style>
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        min-height: 100% !important;
+        overflow-x: hidden !important;
+    }
+
+    .Page {
+        width: 1920px !important;
+        /* Force design width */
+        height: auto !important;
+        transform-origin: top left !important;
+        /* Prevent blur/artifacts: */
+        backface-visibility: hidden !important;
+        image-rendering: crisp-edges !important;
+    }
+</style>
+<script>
+    function scalePage() {
+        const designWidth = 1920;
+        const viewportWidth = window.innerWidth;
+        const scale = Math.min(1, viewportWidth / designWidth);
+
+        const page = document.querySelector('.Page');
+        if (!page) return;
+
+        // Apply scaling with !important
+        page.style.setProperty('transform', `scale(${scale})`, 'important');
+
+        // Sync body height to scaled content
+        const scaledHeight = page.scrollHeight * scale;
+        document.body.style.setProperty('height', `${scaledHeight}px`, 'important');
+    }
+
+    window.addEventListener('load', scalePage);
+    window.addEventListener('resize', scalePage);
+</script>
+
+
+<script>
+    function scalePage() {
+        const designWidth = 1920;
+        const scale = Math.min(1, window.innerWidth / designWidth);
+        const page = document.querySelector('.Page');
+        if (!page) return;
+
+        // Apply scaling
+        page.style.transform = `scale(${scale})`;
+
+        // FIX: Use *scaled* height from getBoundingClientRect()
+        const scaledHeight = page.getBoundingClientRect().height;
+        document.body.style.height = `${scaledHeight}px`;
+
+        // DEBUG: Uncomment to verify heights match
+        // console.log({
+        //   "Page Height (Pixels)": page.offsetHeight,
+        //   "Scaled Height (Visible)": scaledHeight,
+        //   "Body Height": document.body.style.height
+        // });
+    }
+
+    window.addEventListener('load', scalePage);
+    window.addEventListener('resize', scalePage);
+</script>
+
+
+
+
+
+
+
+
+
+
+<style>
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        overflow-x: hidden !important;
+        overflow-y: hidden !important;
+        /* Prevent body scrollbar */
+    }
+
+    .Page {
+        width: 1920px !important;
+        height: auto !important;
+        transform-origin: top left !important;
+        backface-visibility: hidden !important;
+        overflow: visible !important;
+        /* Ensure content can expand */
+    }
+
+    /* Container to handle scrolling */
+    .scroll-container {
+        position: fixed;
+        width: 100vw;
+        height: 100vh;
+        overflow: auto;
+    }
+</style>
+
+<script>
+    function scalePage() {
+        const designWidth = 1920;
+        const scale = Math.min(1, window.innerWidth / designWidth);
+        const page = document.querySelector('.Page');
+        if (!page) return;
+
+        // Apply scaling
+        page.style.transform = `scale(${scale})`;
+
+        // No need to set body height anymore
+        // The scroll-container will handle scrolling
+    }
+
+    window.addEventListener('load', scalePage);
+    window.addEventListener('resize', scalePage);
+</script>
+
+
+
+<!---->
+
+
+
+
+<style>
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        min-height: 100vh !important;
+        overflow-x: hidden !important;
+        /* Never horizontal scroll */
+        overflow-y: auto !important;
+        /* Let BROWSER decide vertical scroll */
+    }
+
+    .Page {
+        width: 1920px !important;
+        height: auto !important;
+        transform-origin: top left !important;
+        backface-visibility: hidden !important;
+        /* NO scrolling on this element! */
+        overflow: visible !important;
+        background: blue !important;
+        /* Keep debug colors */
+    }
+
+    .FloatingGroup{
+        width: 1920px !important;
+        height: auto !important;
+        transform-origin: top left !important;
+        backface-visibility: hidden !important;
+        /* NO scrolling on this element! */
+        overflow: visible !important;
+        background: blue !important;
+        /* Keep debug colors */
+    }
+
+    html {
+        background: red !important;
+        /* Phantom space indicator */
+    }
+</style>
+
+<script>
+    function scalePage() {
+        const designWidth = 1920;
+        const scale = Math.min(1, window.innerWidth / designWidth);
+        const page = document.querySelector('.Page');
+        const floatingGroup = document.querySelector('.FloatingGroup');
+        if (!page) return;
+
+        // Apply scaling
+        page.style.transform = `scale(${scale})`;
+        floatingGroup.style.transform = `scale(${scale})`;
+
+        // CALCULATE PHANTOM SPACE FIRST
+        const phantomSpace = page.offsetHeight - page.getBoundingClientRect().height;
+
+        // DEBUG OUTPUT - FIXED VERSION
+        console.log({
+            // Core Measurements
+            "Viewport": `${window.innerWidth}x${window.innerHeight}`,
+            "Page Layout (offset)": `${page.offsetWidth}x${page.offsetHeight}`,
+            "Page Visual (scaled)": `${page.getBoundingClientRect().width.toFixed(2)}x${page.getBoundingClientRect().height.toFixed(2)}`,
+            "Scale Factor": scale,
+
+            // Document Flow Analysis
+            "Document Scroll Height": document.documentElement.scrollHeight,
+            "Body Scroll Height": document.body.scrollHeight,
+
+            // Scroll Triggers
+            "Transform Matrix": getComputedStyle(page).transform,
+            "Should Scroll (Visual)": page.getBoundingClientRect().height > window.innerHeight,
+            "Should Scroll (Layout)": page.offsetHeight > window.innerHeight,
+
+            // Containment Checks
+            "Body Overflow": getComputedStyle(document.body).overflowY,
+            "Html Overflow": getComputedStyle(document.documentElement).overflowY,
+
+            // Phantom Space Analysis
+            "Phantom Space (px)": phantomSpace,
+            "Phantom Space (%)": `${(phantomSpace / page.offsetHeight * 100).toFixed(1)}%`,
+
+            // Debug Visual State
+            "Red Area Visible": document.querySelector('html').getBoundingClientRect().height > window.innerHeight,
+            "Blue Area Height": page.getBoundingClientRect().height
+        });
+    }
+
+    window.addEventListener('load', scalePage);
+    window.addEventListener('resize', scalePage);
+</script>
+
+
+<!-- DO NOT KILL THE ABOVE-->
+
+
+
+<div id="size-hack"></div>
+<style>
+    /* SCALED VISUAL CONTENT */
+    .Page {
+        width: 1920px !important;
+        height: auto !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        transform-origin: top left !important;
+        transform: scale(var(--scale-factor, 1));
+        /* CSS variable control */
+        background: rgba(0, 0, 255, 0.1) !important; /* Semi-transparent blue */
+    }
+
+    /* PROXY SIZING ELEMENT */
+    #size-hack {
+        visibility: hidden !important;
+        pointer-events: none !important;
+        width: calc(1920px * var(--scale-factor, 1));
+        height: calc(var(--content-height, 1080px) * var(--scale-factor, 1));
+        background: rgba(0, 255, 0, 0.1) !important; /* Green overlay for proxy */
+        z-index: 9999 !important; /* Ensure visibility */
+    }
+
+    /* DOCUMENT CONTAINMENT */
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        height: var(--doc-height, 100vh) !important;
+        overflow: auto !important;
+    }
+
+    html{
+        background: rgba(255, 0, 0, 0.1) !important; /* Subtle red */        
+    }
+</style>
+
+<script>
+    function scalePage() {
+        // 1. Calculate scale factor
+        const scale = Math.min(1, window.innerWidth / 1920);
+
+        // 2. Set CSS variables
+        document.documentElement.style.setProperty('--scale-factor', scale);
+
+        // 3. Update proxy dimensions
+        const page = document.querySelector('.Page');
+        const visualHeight = page.getBoundingClientRect().height;
+        document.documentElement.style.setProperty('--content-height', `${page.offsetHeight}px`);
+        document.documentElement.style.setProperty('--doc-height', `${visualHeight}px`);
+
+        // 4. Force clean layout
+        document.getElementById('size-hack').style.display = 'none';
+        document.getElementById('size-hack').offsetHeight; // Trigger reflow
+        document.getElementById('size-hack').style.display = 'block';
+
+        // ===== DEBUG ONLY - NO CODE CHANGES ===== 
+        console.log({
+            // ACTUAL VALUES FROM YOUR IMPLEMENTATION
+            "Viewport": `${window.innerWidth}x${window.innerHeight}`,
+            "Scale Factor": scale,
+            "CSS Variables": {
+                "--scale-factor": getComputedStyle(document.documentElement)
+                    .getPropertyValue('--scale-factor').trim(),
+                "--content-height": getComputedStyle(document.documentElement)
+                    .getPropertyValue('--content-height').trim(),
+                "--doc-height": getComputedStyle(document.documentElement)
+                    .getPropertyValue('--doc-height').trim()
+            },
+            "Page Element": {
+                "Original Width": page.offsetWidth,
+                "Original Height": page.offsetHeight,
+                "Scaled Width": page.getBoundingClientRect().width,
+                "Scaled Height": page.getBoundingClientRect().height
+            },
+            "Proxy Element (#size-hack)": {
+                "Computed Width": hack.offsetWidth,
+                "Computed Height": hack.offsetHeight,
+                "Expected Width (1920 * scale)": 1920 * scale,
+                "Expected Height (content * scale)":
+                    parseInt(getComputedStyle(document.documentElement)
+                        .getPropertyValue('--content-height')) * scale
+            },
+            "Document State": {
+                "documentElement.scrollHeight": document.documentElement.scrollHeight,
+                "body.scrollHeight": document.body.scrollHeight,
+                "Phantom Space": page.offsetHeight - page.getBoundingClientRect().height
+            }
+        });
+    }
+
+    window.addEventListener('load', scalePage);
+    window.addEventListener('resize', () => {
+        requestAnimationFrame(scalePage);
+    });
+</script>

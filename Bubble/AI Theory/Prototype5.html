@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Recursive Causality Agent (RCA) Prototype</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #111; color: #fff; margin: 0; padding: 0; }
+    canvas { display: block; background: #222; margin: 0 auto; }
+    #stats, #log { max-width: 800px; margin: 10px auto; padding: 10px; background: #333; border-radius: 8px; }
+    .stat { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    #controls { text-align: center; margin: 10px; }
+    button { padding: 10px 20px; font-size: 16px; margin: 5px; }
+    #log { height: 150px; overflow-y: auto; font-size: 14px; }
+  </style>
+</head>
+<body>
+<canvas id="canvas" width="800" height="400"></canvas>
+
+<div id="stats">
+  <div class="stat"><span>Energy:</span> <span id="energy">0</span></div>
+  <div class="stat"><span>Emotion:</span> <span id="emotion">-</span></div>
+  <div class="stat"><span>Action:</span> <span id="action">-</span></div>
+  <div class="stat"><span>Effects:</span> <span id="effects">-</span></div>
+  <div class="stat"><span>Green Zone Entries:</span> <span id="greenCount">0</span></div>
+  <div class="stat"><span>Red Zone Entries:</span> <span id="redCount">0</span></div>
+</div>
+
+<div id="controls">
+  <button onclick="toggleSimulation()" id="toggleBtn">Pause</button>
+</div>
+<div id="log"></div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const agent = {
+  x: 100,
+  y: 200,
+  energy: 10000000000,
+  emotion: "Neutral",
+  action: "Idle",
+  effects: "None",
+  directionAngle: Math.random() * Math.PI * 2
+};
+
+let greenZoneCount = 0;
+let redZoneCount = 0;
+
+let isRunning = true;
+let logEl = document.getElementById("log");
+
+function log(message) {
+  const entry = document.createElement("div");
+  entry.textContent = message;
+  logEl.appendChild(entry);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+function updateStats() {
+  document.getElementById("energy").textContent = agent.energy.toFixed(0);
+  document.getElementById("emotion").textContent = agent.emotion;
+  document.getElementById("action").textContent = agent.action;
+  document.getElementById("effects").textContent = agent.effects;
+  document.getElementById("greenCount").textContent = greenZoneCount;
+  document.getElementById("redCount").textContent = redZoneCount;
+}
+
+const environmentZones = [
+  { x: 600, y: 200, radius: 40, type: "Reward", color: "green" },
+  { x: 400, y: 100, radius: 40, type: "Fear", color: "red" }
+];
+
+function drawEnvironment() {
+  environmentZones.forEach(zone => {
+    ctx.beginPath();
+    ctx.arc(zone.x, zone.y, zone.radius, 0, Math.PI * 2);
+    ctx.fillStyle = zone.color;
+    ctx.fill();
+  });
+}
+
+function drawAgent() {
+  ctx.beginPath();
+  ctx.arc(agent.x, agent.y, 10, 0, Math.PI * 2);
+  ctx.fillStyle = "yellow";
+  ctx.fill();
+}
+
+function applyRCA() {
+  let dx = Math.cos(agent.directionAngle) * 2;
+  let dy = Math.sin(agent.directionAngle) * 2;
+
+  let closestZone = null;
+  let closestDist = Infinity;
+
+  for (let zone of environmentZones) {
+    let dist = Math.hypot(agent.x - zone.x, agent.y - zone.y);
+    if (dist < closestDist) {
+      closestDist = dist;
+      closestZone = zone;
+    }
+
+    if (dist < zone.radius + 10) {
+      if (zone.type === "Reward") {
+        agent.energy += 10;
+        agent.emotion = "Happy";
+        agent.effects = "Boosted";
+        agent.action = "Gravitate to Reward";
+        agent.directionAngle = Math.atan2(zone.y - agent.y, zone.x - agent.x);
+        dx = Math.cos(agent.directionAngle) * 3;
+        dy = Math.sin(agent.directionAngle) * 3;
+        greenZoneCount++;
+        log("Zone effect: Reward zone triggered.");
+      } else if (zone.type === "Fear") {
+        agent.energy -= 5;
+        agent.emotion = "Anxious";
+        agent.effects = "Retreating";
+        agent.action = "Flee";
+        agent.directionAngle = Math.atan2(agent.y - zone.y, agent.x - zone.x);
+        dx = Math.cos(agent.directionAngle) * 5;
+        dy = Math.sin(agent.directionAngle) * 5;
+        redZoneCount++;
+        log("Zone effect: Fear zone triggered.");
+      }
+    }
+  }
+
+  // Smooth drift
+  agent.directionAngle += (Math.random() - 0.5) * 0.2;
+
+  // Update position
+  agent.x += dx;
+  agent.y += dy;
+
+  // Bounce off walls
+  if (agent.x <= 0 || agent.x >= canvas.width) {
+    agent.directionAngle = Math.PI - agent.directionAngle;
+    agent.x = Math.max(0, Math.min(canvas.width, agent.x));
+  }
+  if (agent.y <= 0 || agent.y >= canvas.height) {
+    agent.directionAngle = -agent.directionAngle;
+    agent.y = Math.max(0, Math.min(canvas.height, agent.y));
+  }
+
+  agent.energy -= 2;
+
+  if (agent.energy <= 0) {
+    agent.action = "Depleted";
+    agent.emotion = "Exhausted";
+    agent.effects = "None";
+    log("Agent depleted energy and stopped.");
+    isRunning = false;
+    document.getElementById("toggleBtn").textContent = "Play";
+  }
+}
+
+function render() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawEnvironment();
+  drawAgent();
+  updateStats();
+}
+
+function simulate() {
+  if (isRunning) {
+    applyRCA();
+    render();
+  }
+}
+
+let interval = setInterval(simulate, 10);
+
+function toggleSimulation() {
+  isRunning = !isRunning;
+  document.getElementById("toggleBtn").textContent = isRunning ? "Pause" : "Play";
+}
+
+render();
+</script>
+</body>
+</html>

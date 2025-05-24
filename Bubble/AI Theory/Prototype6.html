@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Zone Behavior Demo</title>
+  <style>
+    body { background: #111; margin: 0; padding: 0; color: #fff; font-family: Arial, sans-serif; }
+    canvas { display: block; margin: 0 auto; background: #222; }
+    #statusPanel { max-width: 800px; margin: 10px auto; padding: 10px; background: #333; border-radius: 8px; }
+    .stat { margin-bottom: 5px; }
+  </style>
+</head>
+<body>
+<canvas id="canvas" width="800" height="400"></canvas>
+<div id="statusPanel">
+  <div class="stat">Status: <span id="status">Neutral</span></div>
+  <div class="stat">Green Zone Collisions: <span id="greenCount">0</span></div>
+  <div class="stat">Red Zone Collisions: <span id="redCount">0</span></div>
+</div>
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+const statusEl = document.getElementById("status");
+const greenCountEl = document.getElementById("greenCount");
+const redCountEl = document.getElementById("redCount");
+
+const agent = {
+  x: 100,
+  y: 200,
+  radius: 10,
+  speed: 2,
+  angle: Math.random() * Math.PI * 2,
+  behavior: 'neutral',
+  target: null
+};
+
+const zones = [
+  { x: 600, y: 200, radius: 40, type: "green", color: "green" },
+  { x: 400, y: 100, radius: 40, type: "red", color: "red" }
+];
+
+let greenCollisions = 0;
+let redCollisions = 0;
+
+let countdownValue = null;
+let countdownTimer = null;
+
+function showCountdown(seconds) {
+  clearInterval(countdownTimer);
+  countdownValue = seconds;
+
+  countdownTimer = setInterval(() => {
+    countdownValue--;
+    if (countdownValue <= 0) {
+      clearInterval(countdownTimer);
+      countdownValue = null;
+    }
+  }, 1000);
+}
+
+function setBehavior(newBehavior, targetZone, delay = 0) {
+  showCountdown(delay / 1000); // Only visual, no logic change
+  setTimeout(() => {
+    agent.behavior = newBehavior;
+    agent.target = targetZone;
+    updateStatus();
+  }, delay);
+}
+
+function updateStatus() {
+  statusEl.textContent = agent.behavior.charAt(0).toUpperCase() + agent.behavior.slice(1);
+  greenCountEl.textContent = greenCollisions;
+  redCountEl.textContent = redCollisions;
+}
+
+function moveAgent() {
+  let dx = Math.cos(agent.angle) * agent.speed;
+  let dy = Math.sin(agent.angle) * agent.speed;
+
+  let nextX = agent.x + dx;
+  let nextY = agent.y + dy;
+
+  let collided = false;
+
+  zones.forEach(zone => {
+    const dist = Math.hypot(nextX - zone.x, nextY - zone.y);
+    const totalRadius = agent.radius + zone.radius;
+
+    if (dist < totalRadius) {
+      collided = true;
+
+      const angleFromCenter = Math.atan2(agent.y - zone.y, agent.x - zone.x);
+      agent.angle = angleFromCenter + (Math.random() * 0.5 - 0.25);
+
+      if (zone.type === "green") {
+        greenCollisions++;
+        agent.behavior = "neutral";
+        agent.target = null;
+        updateStatus();
+        setBehavior("gravitate", zone, 4000);
+      } else if (zone.type === "red") {
+        redCollisions++;
+        agent.behavior = "avoid";
+        agent.target = zone;
+        updateStatus();
+        setBehavior("neutral", null, 4000);
+      }
+    }
+  });
+
+  if (!collided) {
+    if (agent.behavior === "gravitate" && agent.target) {
+      const angleToTarget = Math.atan2(agent.target.y - agent.y, agent.target.x - agent.x);
+      agent.angle += (angleToTarget - agent.angle) * 0.05;
+    } else if (agent.behavior === "avoid" && agent.target) {
+      const angleFromTarget = Math.atan2(agent.y - agent.target.y, agent.x - agent.target.x);
+      agent.angle += (angleFromTarget - agent.angle) * 0.1;
+    }
+
+    agent.x = nextX;
+    agent.y = nextY;
+  }
+
+  if (agent.x <= agent.radius || agent.x >= canvas.width - agent.radius) {
+    agent.angle = Math.PI - agent.angle;
+  }
+  if (agent.y <= agent.radius || agent.y >= canvas.height - agent.radius) {
+    agent.angle = -agent.angle;
+  }
+}
+
+function drawScene() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Draw zones
+  zones.forEach(zone => {
+    ctx.beginPath();
+    ctx.arc(zone.x, zone.y, zone.radius, 0, Math.PI * 2);
+    ctx.fillStyle = zone.color;
+    ctx.fill();
+  });
+
+  // Draw agent
+  ctx.beginPath();
+  ctx.arc(agent.x, agent.y, agent.radius, 0, Math.PI * 2);
+  ctx.fillStyle = "yellow";
+  ctx.fill();
+
+  // Draw countdown
+  if (countdownValue !== null) {
+    ctx.fillStyle = "white";
+    ctx.font = "20px Arial";
+    ctx.fillText(`Countdown: ${countdownValue}`, 10, canvas.height - 10);
+  }
+}
+
+function loop() {
+  moveAgent();
+  drawScene();
+  requestAnimationFrame(loop);
+}
+
+updateStatus();
+loop();
+</script>
+</body>
+</html>
